@@ -3,5 +3,5 @@ work/
 nextflow.log*
 *h5ad
 *mtx
-test/
 study_names.txt
+test/
