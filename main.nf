@@ -4,7 +4,7 @@
 
 
  process downloadStudies {
-    publishDir "${params.outdir}/studies", mode: 'copy'
+    //publishDir "${params.outdir}/studies", mode: 'copy'
 
     input:
         val study_name
@@ -23,7 +23,7 @@
  }
 
 process downloadCelltypes {
-    publishDir "${params.outdir}/${study_name}", mode: 'copy'
+    // publishDir "${params.outdir}/${study_name}", mode: 'copy'
 
     input:
         val study_name
@@ -48,7 +48,7 @@ process downloadCelltypes {
 }
 
 process getGemmaMeta {
-    publishDir "${params.outdir}/${study_name}", mode: 'copy'
+    // publishDir "${params.outdir}/${study_name}", mode: 'copy'
 
     conda "/home/rschwartz/anaconda3/envs/scanpyenv"
  
@@ -70,27 +70,51 @@ process getGemmaMeta {
 
 
 process processStudies {
-    publishDir "${params.outdir}/${study_name}", mode: 'copy'
+    publishDir "${params.outdir}", mode: 'copy'
     conda "/home/rschwartz/anaconda3/envs/scanpyenv"
     input:
         tuple val(study_name), path(study_dir), path(celltypes_meta), path(sample_meta)
 
     output:
-        path "**.h5ad"
-        path "${study_name}_unique_cells.tsv"
+       path "**.h5ad", emit: h5ad_paths
+       path "**${study_name}_unique_cells.tsv", emit: unique_cell_path
+       //path "${study_name}_organism.txt"; emit organism
+        
     script:
 
     """
     # Process the cell types metadata
     python /space/grp/rschwartz/rschwartz/get_gemma_data.nf/bin/gemma_preprop.py \\
         --study_dir ${study_dir} \\
-        --outdir ${study_name} \\
         --cell_meta_path ${celltypes_meta} \\
         --sample_meta_path ${sample_meta} \\
         --study_name ${study_name}
     """
 }
 
+
+
+// process moveResults {
+    // publishDir "${params.outdir}", mode: 'copy' 
+
+    // input:
+        // tuple val(organism), path(unique_cell_path), path(h5ad_paths)
+
+    // output:
+        // "*h5ad"
+        // "*unique_cells"
+
+    // script:
+
+        // """
+        // mkdir -p sample_subsets_${organism}
+        // cp h5ad_path  sample_subsets_${organism}
+
+        // mkdir -p unique_cells_${organism}
+        // cp unique_cell_path unique_cells_${organism}
+        // """
+
+// }
 // Workflow definition
 workflow {
 
@@ -118,6 +142,9 @@ workflow {
 
     // Process the data
     processStudies(combined_params_2)
+
+   // mapped_to_organism = processStudies.out.mapped_to_organism
+    // moveResults(mapped_to_organism)
 }
 
 

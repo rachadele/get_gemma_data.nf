@@ -76,7 +76,7 @@ def combine_adata(all_sample_ids):
   #combined_adata.write_h5ad(f"{study_name}.h5ad")
   return(combined_adata)
   
-def add_cell_meta(adata, cell_meta_path, sep="\t", outdir=None, study_name=None):
+def add_cell_meta(adata, cell_meta_path, sep="\t", study_name=None):
   meta = pd.read_csv(cell_meta_path, sep=sep)
   meta["combined_id"] = meta["cell_id"].astype(str) + "_" + meta["sample_id"].astype(str)
   meta = meta.set_index("combined_id")
@@ -101,19 +101,21 @@ def add_sample_meta(adata, meta_path, sep="\t", outdir=None, study_name=None):
     pass
   return(adata)
   
-def write_unique_cells(meta_path, sep='\t', outdir=None, study_name=None):
+def write_unique_cells(meta_path, sep='\t', study_name=None,organism=None):
+  outdir=os.path.join("unique_cells",organism)
+  os.makedirs(outdir, exist_ok=True)
   meta = pd.read_csv(meta_path, sep=sep)
   unique_cells = pd.DataFrame(meta["cell_type"].value_counts()).reset_index()
-  unique_cells.to_csv(f"{study_name}_unique_cells.tsv", sep='\t', index=False)
+  unique_cells.to_csv(os.path.join(outdir,f"{study_name}_unique_cells.tsv"), sep='\t', index=False)
 
-def write_as_samples(adata, study_name=None):
-  adata.obs["sample_id"] = adata.obs["sample_id"].apply(str)
+def write_as_samples(adata, study_name=None, organism=None):
+  os.makedirs(organism, exist_ok=True)
   for sample_id in adata.obs["sample_id"].unique():
     sample_adata = adata[adata.obs["sample_id"] == sample_id]
     #drop columns with only NaNs
     #fille NaN with ""
     sample_adata.obs = sample_adata.obs.fillna("")
-    sample_adata.write_h5ad(f"{study_name}_{sample_id}.h5ad")
+    sample_adata.write_h5ad(os.path.join(organism,f"{study_name}_{sample_id}.h5ad"))
     
 def main():
     parser = argparse.ArgumentParser()
@@ -121,22 +123,22 @@ def main():
     parser.add_argument("--study_name", type=str, required=True)
     parser.add_argument("--cell_meta_path", type=str, required=True)
     parser.add_argument("--sample_meta_path", type=str, required=True)
-    parser.add_argument("--outdir", type=str, required=True)
-    
+
     args = parser.parse_args()
     study_path = args.study_dir
     study_name = args.study_name
     cell_meta_path = args.cell_meta_path
     sample_meta_path = args.sample_meta_path
-    outdir = args.outdir
     
     all_sample_ids = load_mex(study_path)
     adata = combine_adata(all_sample_ids)
-    adata = add_cell_meta(adata, cell_meta_path, study_name=study_name, outdir=outdir)
-    adata = add_sample_meta(adata, sample_meta_path, study_name=study_name, outdir=outdir)
-    write_as_samples(adata, study_name=study_name)
+    adata = add_cell_meta(adata, cell_meta_path, study_name=study_name)
+    adata = add_sample_meta(adata, sample_meta_path, study_name=study_name)
+    organism=adata.obs["organism"][0]
+    print(organism)
+    write_as_samples(adata, study_name=study_name, organism=organism)
 
-    write_unique_cells(cell_meta_path, study_name=study_name)
+    write_unique_cells(cell_meta_path, study_name=study_name, organism=organism)
     
 if __name__ == "__main__":
     main()
