@@ -5,3 +5,4 @@ nextflow.log*
 *mtx
 study_names.txt
 test/
+cortex_only/
