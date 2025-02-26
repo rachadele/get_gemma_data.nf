@@ -78,7 +78,6 @@ process processStudies {
     output:
        path "**.h5ad", emit: h5ad_paths
        path "**${study_name}_unique_cells.tsv", emit: unique_cell_path
-       //path "${study_name}_organism.txt"; emit organism
         
     script:
 
