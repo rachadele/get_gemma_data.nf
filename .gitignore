@@ -6,3 +6,4 @@ nextflow.log*
 study_names.txt
 test/
 cortex_only/
+all_brain/
