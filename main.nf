@@ -94,27 +94,7 @@ process processStudies {
 
 
 
-// process moveResults {
-    // publishDir "${params.outdir}", mode: 'copy' 
 
-    // input:
-        // tuple val(organism), path(unique_cell_path), path(h5ad_paths)
-
-    // output:
-        // "*h5ad"
-        // "*unique_cells"
-
-    // script:
-
-        // """
-        // mkdir -p sample_subsets_${organism}
-        // cp h5ad_path  sample_subsets_${organism}
-
-        // mkdir -p unique_cells_${organism}
-        // cp unique_cell_path unique_cells_${organism}
-        // """
-
-// }
 // Workflow definition
 workflow {
 
@@ -143,8 +123,6 @@ workflow {
     // Process the data
     processStudies(combined_params_2)
 
-   // mapped_to_organism = processStudies.out.mapped_to_organism
-    // moveResults(mapped_to_organism)
 }
 
 
