@@ -7,3 +7,6 @@ study_names.txt
 test/
 cortex_only/
 all_brain/
+forebrain_only/
+hsapiens_new/
+new_hsap.txt
