@@ -23,7 +23,7 @@
  }
 
 process downloadCelltypes {
-    // publishDir "${params.outdir}/${study_name}", mode: 'copy'
+    publishDir "${params.outdir}/${study_name}", mode: 'copy'
 
     input:
         val study_name
@@ -48,7 +48,7 @@ process downloadCelltypes {
 }
 
 process getGemmaMeta {
-    publishDir "${params.outdir}/${study_name}", mode: 'copy'
+    publishDir "${params.outdir}/meta", mode: 'copy'
 
     conda "/home/rschwartz/anaconda3/envs/scanpyenv"
  
@@ -56,7 +56,7 @@ process getGemmaMeta {
         val study_name
 
     output:
-        tuple val(study_name), path("${study_name}_sample_meta.tsv"), emit: sample_meta
+        tuple val(study_name), path("**${study_name}_sample_meta.tsv"), emit: sample_meta
 
     script:
 

@@ -66,7 +66,11 @@ def load_mex(study_path):
     
   return all_sample_ids
 
-
+def check_size(adata):
+  if adata.shape[0] < 50:
+    return False
+  else:
+    return True
   
 def combine_adata(all_sample_ids):
   combined_adata = sc.concat(all_sample_ids, label="sample_id", join="inner") 
@@ -108,14 +112,27 @@ def write_unique_cells(meta_path, sep='\t', study_name=None,organism=None):
   unique_cells = pd.DataFrame(meta["cell_type"].value_counts()).reset_index()
   unique_cells.to_csv(os.path.join(outdir,f"{study_name}_unique_cells.tsv"), sep='\t', index=False)
 
+
 def write_as_samples(adata, study_name=None, organism=None):
+  small_samples = []
   os.makedirs(organism, exist_ok=True)
   for sample_id in adata.obs["sample_id"].unique():
     sample_adata = adata[adata.obs["sample_id"] == sample_id]
+    # check size
+    if not check_size(sample_adata):
+      # nee to combine with other samples
+      small_samples.append(sample_id)
+      continue
     #drop columns with only NaNs
     #fille NaN with ""
     sample_adata.obs = sample_adata.obs.fillna("")
     sample_adata.write_h5ad(os.path.join(organism,f"{study_name}_{sample_id}.h5ad"))
+  if len(small_samples) > 0:
+    print(f"Samples {small_samples} are too small to be written as individual files. They will be combined with other samples.")
+    # combine small samples
+    small_samples_adata = adata[adata.obs["sample_id"].isin(small_samples)]
+    small_samples_adata.obs = small_samples_adata.obs.fillna("")
+    small_samples_adata.write_h5ad(os.path.join(organism,f"{study_name}_small_samples.h5ad"))
     
 def main():
     parser = argparse.ArgumentParser()

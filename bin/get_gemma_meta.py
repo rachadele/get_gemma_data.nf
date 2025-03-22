@@ -13,7 +13,7 @@ import gemmapy
 
 def argument_parser():
     parser = argparse.ArgumentParser(description="Preprocess data from GEMMA")
-    parser.add_argument("--study_name", type=str, help="Name of the study", default="GSE247339.1")
+    parser.add_argument("--study_name", type=str, help="Name of the study", default="GSE199460.2")
     return parser.parse_args()
 
 def main():
@@ -35,9 +35,10 @@ def main():
     # combine all dfs
     sample_meta_combined = pd.concat(sample_meta_updated2)
     sample_meta_combined.drop_duplicates(subset=["sample_id", "category"], inplace=True)
-
+    outdir = organisms[0]
+    os.makedirs(outdir, exist_ok=True)
     sample_meta_df = sample_meta_combined.pivot(index=["sample_id","organism"], columns="category",values="value").reset_index()
-    sample_meta_df.to_csv(f"{study_name}_sample_meta.tsv", index=False, sep="\t")
+    sample_meta_df.to_csv(os.path.join(outdir,f"{study_name}_sample_meta.tsv"), index=False, sep="\t")
     
 
     
