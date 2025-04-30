@@ -101,7 +101,7 @@ process processStudies {
         --cell_meta_path ${celltypes_meta} \\
         --sample_meta_path ${sample_meta} \\
         --study_name ${study_name} \\
-        ${params.write_samples ? "--write_samples" : ''}
+        ${params.write_samples ? "--write_samples" : ""}
     """
 }
 

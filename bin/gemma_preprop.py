@@ -143,7 +143,7 @@ def main():
     parser.add_argument("--study_name", type=str, required=True)
     parser.add_argument("--cell_meta_path", type=str, required=True)
     parser.add_argument("--sample_meta_path", type=str, required=True)
-    parser.add_argument("--write_samples", action="store_true", help="Write samples as individual files", default=True)
+    parser.add_argument("--write_samples", action="store_true", help="Write samples as individual files")
     args = parser.parse_args()
     study_path = args.study_dir
     study_name = args.study_name
