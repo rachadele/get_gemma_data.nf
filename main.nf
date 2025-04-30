@@ -16,14 +16,14 @@
      script:
 
      """
-     gemma-cli-sc getSingleCellDataMatrix -e $study_name --format mex --scale-type count --use-ensembl-ids -o $study_name
+     gemma-cli-sc getSingleCellDataMatrix --no-streaming -e $study_name --format mex --scale-type count --use-ensembl-ids -o $study_name 
 
 
      """
  }
 
 process downloadCelltypes {
-    publishDir "${params.outdir}/${study_name}", mode: 'copy'
+    publishDir "${params.outdir}/cell_type_assignments", mode: 'copy'
 
     input:
         val study_name
@@ -34,11 +34,24 @@ process downloadCelltypes {
     script:
     
     """
-         curl -u ${params.GEMMA_USERNAME}:${params.GEMMA_PASSWORD} \\
-        -H Accept:text/tab-separated-values https://dev.gemma.msl.ubc.ca/rest/v2/datasets/${study_name}/cellTypeAssignment?useBioAssayId=true \\
-        -o ${study_name}.celltypes.tsv
+    # if params.author_submitted is true, use the author-submitted cell type assignments
+    # if params.author_submitted is false, use the preferred cell type assignments from the single cell dimension
 
+   if [ ${params.author_submitted} = true ]; then
 
+        curl -u "${params.GEMMA_USERNAME}:${params.GEMMA_PASSWORD}" \
+        -H "Accept: text/tab-separated-values" \
+        --compressed \
+        "https://dev.gemma.msl.ubc.ca/rest/v2/datasets/${study_name}/cellTypeAssignment?useBioAssayId=true&cellTypeAssignment=author-submitted" \
+        -o "${study_name}.celltypes.tsv"
+
+    else
+        curl -u "${params.GEMMA_USERNAME}:${params.GEMMA_PASSWORD}" \
+        -H "Accept: text/tab-separated-values" \
+        --compressed \
+        "https://dev.gemma.msl.ubc.ca/rest/v2/datasets/${study_name}/cellTypeAssignment?useBioAssayId=true" \
+        -o "${study_name}.celltypes.tsv"
+    fi
     """
 
     //        #curl -u "$GEMMA_USERNAME:$GEMMA_PASSWORD" -H "Accept:text/tab-separated-values" \
@@ -48,7 +61,7 @@ process downloadCelltypes {
 }
 
 process getGemmaMeta {
-    publishDir "${params.outdir}/meta", mode: 'copy'
+    publishDir "${params.outdir}", mode: 'copy'
 
     conda "/home/rschwartz/anaconda3/envs/scanpyenv"
  
@@ -87,7 +100,8 @@ process processStudies {
         --study_dir ${study_dir} \\
         --cell_meta_path ${celltypes_meta} \\
         --sample_meta_path ${sample_meta} \\
-        --study_name ${study_name}
+        --study_name ${study_name} \\
+        ${params.write_samples ? "--write_samples" : ''}
     """
 }
 

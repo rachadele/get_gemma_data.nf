@@ -113,7 +113,7 @@ def write_unique_cells(meta_path, sep='\t', study_name=None,organism=None):
   unique_cells.to_csv(os.path.join(outdir,f"{study_name}_unique_cells.tsv"), sep='\t', index=False)
 
 
-def write_as_samples(adata, study_name=None, organism=None):
+def write_as_samples(adata, study_name, organism):
   small_samples = []
   os.makedirs(organism, exist_ok=True)
   for sample_id in adata.obs["sample_id"].unique():
@@ -132,7 +132,10 @@ def write_as_samples(adata, study_name=None, organism=None):
     # combine small samples
     small_samples_adata = adata[adata.obs["sample_id"].isin(small_samples)]
     small_samples_adata.obs = small_samples_adata.obs.fillna("")
-    small_samples_adata.write_h5ad(os.path.join(organism,f"{study_name}_small_samples.h5ad"))
+    if check_size(small_samples_adata):
+      small_samples_adata.write_h5ad(os.path.join(organism,f"{study_name}_small_samples.h5ad"))
+    else:
+      print(f"Combined small samples are still too small to be written as a single file. Skipping writing.")
     
 def main():
     parser = argparse.ArgumentParser()
@@ -140,12 +143,13 @@ def main():
     parser.add_argument("--study_name", type=str, required=True)
     parser.add_argument("--cell_meta_path", type=str, required=True)
     parser.add_argument("--sample_meta_path", type=str, required=True)
-
+    parser.add_argument("--write_samples", action="store_true", help="Write samples as individual files", default=True)
     args = parser.parse_args()
     study_path = args.study_dir
     study_name = args.study_name
     cell_meta_path = args.cell_meta_path
     sample_meta_path = args.sample_meta_path
+    write_samples = args.write_samples
     
     all_sample_ids = load_mex(study_path)
     adata = combine_adata(all_sample_ids)
@@ -153,8 +157,11 @@ def main():
     adata = add_sample_meta(adata, sample_meta_path, study_name=study_name)
     organism=adata.obs["organism"][0]
     print(organism)
-    write_as_samples(adata, study_name=study_name, organism=organism)
-
+    if write_samples:
+      write_as_samples(adata, study_name=study_name, organism=organism)
+    else:
+      adata.write_h5ad(os.path.join(organism,f"{study_name}.h5ad"))
+      
     write_unique_cells(cell_meta_path, study_name=study_name, organism=organism)
     
 if __name__ == "__main__":
