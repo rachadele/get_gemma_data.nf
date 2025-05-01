@@ -115,7 +115,6 @@ def write_unique_cells(meta_path, sep='\t', study_name=None,organism=None):
 
 def write_as_samples(adata, study_name, organism):
   small_samples = []
-  os.makedirs(organism, exist_ok=True)
   for sample_id in adata.obs["sample_id"].unique():
     sample_adata = adata[adata.obs["sample_id"] == sample_id]
     # check size
@@ -156,7 +155,7 @@ def main():
     adata = add_cell_meta(adata, cell_meta_path, study_name=study_name)
     adata = add_sample_meta(adata, sample_meta_path, study_name=study_name)
     organism=adata.obs["organism"][0]
-    print(organism)
+    os.makedirs(organism, exist_ok=True)
     if write_samples:
       write_as_samples(adata, study_name=study_name, organism=organism)
     else:

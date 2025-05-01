@@ -61,7 +61,7 @@ process downloadCelltypes {
 }
 
 process getGemmaMeta {
-    publishDir "${params.outdir}", mode: 'copy'
+   publishDir "${params.outdir}/metadata", mode: 'copy'
 
     conda "/home/rschwartz/anaconda3/envs/scanpyenv"
  
