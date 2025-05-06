@@ -14,4 +14,4 @@ hsap_mmus_forebrain_small_samples/
 nairuz_data.txt
 nairuz_data/
 study_names_human.txt
-to_remove
+to_removepsychEncode psychEncode_author psychEncode.txt
