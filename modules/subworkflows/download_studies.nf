@@ -1,9 +1,15 @@
-include { DOWNLOAD_STUDIES } from "${projectDir}/processes/download_studies.nf"
+include { DOWNLOAD_STUDIES } from "${projectDir}/modules/processes/download_studies.nf"
 
 workflow DOWNLOAD_STUDIES_SUBWF {
-    Channel study_channel
+    
+    take:
+    // One input must be null
+    // Determines whether to download studies or use pre-existing path
+    study_names
+    studies_path
 
-    if (params.study_names) {
+    main:
+    if (study_names) {
         Channel
             .fromPath(params.study_names)
             .flatMap { file -> file.readLines().collect { it.trim() } }
@@ -12,7 +18,7 @@ workflow DOWNLOAD_STUDIES_SUBWF {
         DOWNLOAD_STUDIES(study_names)
             .set { study_channel }
 
-    } else if (params.studies_path) {
+    } else if (studies_path) {
         study_channel = Channel
             .fromPath(params.studies_path)
             .flatMap { path ->
@@ -24,6 +30,6 @@ workflow DOWNLOAD_STUDIES_SUBWF {
         exit 1, "Error: You must provide either 'study_names' or 'studies_path'."
     }
 
-    main:
-    study_channel
+    emit: study_channel
+    
 }

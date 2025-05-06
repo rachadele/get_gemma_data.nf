@@ -2,7 +2,6 @@
 
 
 
-
  process downloadStudies {
     //publishDir "${params.outdir}/studies", mode: 'copy'
 
@@ -26,7 +25,7 @@ process downloadCelltypes {
     publishDir "${params.outdir}/cell_type_assignments", mode: 'copy'
 
     input:
-        val study_name
+       tuple val(study_name), path(study_dir) 
 
     output:
         tuple val(study_name), path("${study_name}.celltypes.tsv"), emit: celltypes_meta
@@ -66,7 +65,7 @@ process getGemmaMeta {
     conda "/home/rschwartz/anaconda3/envs/scanpyenv"
  
     input:
-        val study_name
+        tuple val(study_name), path(study_dir) 
 
     output:
         tuple val(study_name), path("**${study_name}_sample_meta.tsv"), emit: sample_meta
@@ -105,30 +104,30 @@ process processStudies {
     """
 }
 
-
-
+include { DOWNLOAD_STUDIES_SUBWF } from "${projectDir}/modules/subworkflows/download_studies.nf"
 
 // Workflow definition
 workflow {
 
     // Define the study names
-    study_names = Channel.fromPath(params.study_names).flatMap { file ->
+  //  study_names = Channel.fromPath(params.study_names).flatMap { file ->
         // Read the file, split by lines, and trim any extra spaces
-        file.readLines().collect { it.trim() }
-    }
+      //  file.readLines().collect { it.trim() }
+  //  }
+    
+    DOWNLOAD_STUDIES_SUBWF(params.study_names, params.studies_path)
 
+    DOWNLOAD_STUDIES_SUBWF.out.study_channel.set { study_channel }
 
-    // Download the data
-    downloadStudies(study_names)
-    downloadCelltypes(study_names)
+    downloadCelltypes(study_channel)
     // Get the metadata
-    getGemmaMeta(study_names)
+    getGemmaMeta(study_channel)
 
-    study_dirs = downloadStudies.out.study_dir
+   // study_dirs = downloadStudies.out.study_dir
     celltypes_meta = downloadCelltypes.out.celltypes_meta
     sample_meta = getGemmaMeta.out.sample_meta
 
-    combined_params_1 = study_dirs.combine(celltypes_meta, by: 0)
+    combined_params_1 = study_channel.combine(celltypes_meta, by: 0)
     combined_params_2 = combined_params_1.combine(sample_meta, by: 0)
     //combine all of these based on study name
 
