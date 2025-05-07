@@ -1,49 +1,33 @@
 #!/usr/bin/env nextflow
 
-
-
- process downloadStudies {
-    //publishDir "${params.outdir}/studies", mode: 'copy'
-
-    input:
-        val study_name
-
-    output:
-        tuple val(study_name), path("${study_name}/"), emit: study_dir
-
-
-     script:
-
-     """
-     gemma-cli-sc getSingleCellDataMatrix --no-streaming -e $study_name --format mex --scale-type count --use-ensembl-ids -o $study_name 
-
-
-     """
- }
-
 process downloadCelltypes {
     publishDir "${params.outdir}/cell_type_assignments", mode: 'copy'
 
     input:
-       tuple val(study_name), path(study_dir) 
+       tuple val(study_name), path(study_dir)
 
     output:
         tuple val(study_name), path("${study_name}.celltypes.tsv"), emit: celltypes_meta
 
     script:
-    
-    """
-    # if params.author_submitted is true, use the author-submitted cell type assignments
-    # if params.author_submitted is false, use the preferred cell type assignments from the single cell dimension
+    // if params.author_submitted is true, use the author-submitted cell type assignments
+    // if params.author_submitted is true, find cell type assignment name from params.cta_names
+    // if params.author_submitted is false, use the preferred cell type assignments from the single cell dimension
 
-   if [ ${params.author_submitted} = true ]; then
+    if (params.author_submitted) {
+        cellTypeAssignment_name = params.cta_names.get(study_name)
+        cellTypeAssignment_name = cellTypeAssignment_name.replace(" ", "%20")
+    }
+    """
+
+   if [ ${params.author_submitted} ]; then
 
         curl -u "${params.GEMMA_USERNAME}:${params.GEMMA_PASSWORD}" \
         -H "Accept: text/tab-separated-values" \
         --compressed \
-        "https://dev.gemma.msl.ubc.ca/rest/v2/datasets/${study_name}/cellTypeAssignment?useBioAssayId=true&cellTypeAssignment=author-submitted" \
+        "https://dev.gemma.msl.ubc.ca/rest/v2/datasets/${study_name}/cellTypeAssignment?useBioAssayId=true&cellTypeAssignment=${cellTypeAssignment_name}" \
         -o "${study_name}.celltypes.tsv"
-
+        
     else
         curl -u "${params.GEMMA_USERNAME}:${params.GEMMA_PASSWORD}" \
         -H "Accept: text/tab-separated-values" \

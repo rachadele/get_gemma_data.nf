@@ -1,4 +1,5 @@
 process DOWNLOAD_STUDIES {
+    publishDir "${params.outdir}/mex_dirs", mode: 'copy'
     tag "$study_name"
 
     input:
