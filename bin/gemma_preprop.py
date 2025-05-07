@@ -16,13 +16,12 @@ import scipy
 import gzip
 
 def load_mex(study_path):
-
-
-  sample_ids = os.listdir(study_path)
   
+  sample_ids = os.listdir(study_path)
   all_sample_ids = {}
   
   for sample_id in sample_ids:
+    #sample_id = sample_id.astype(str)
     query_path = os.path.join(study_path, sample_id)
     new_sample_id = sample_id.split("_")[0]
     try:
@@ -31,7 +30,7 @@ def load_mex(study_path):
         adata.obs_names_make_unique()
         all_sample_ids[new_sample_id] = adata
     except Exception as e:
-        print(f"Error processing {sample_id}: {e}")
+        print(f"Error processing {sample_id} automatically: {e}. Trying manual read.")
         
         # If an error occurs, try reading the files manually
         try:
@@ -136,14 +135,22 @@ def write_as_samples(adata, study_name, organism):
     else:
       print(f"Combined small samples are still too small to be written as a single file. Skipping writing.")
     
+    
+def parse_args():
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--study_dir", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/work/1b/cd502c6823a37750fd4629b68172fe/CMC")
+  parser.add_argument("--study_name", type=str, default="CMC")
+  parser.add_argument("--cell_meta_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/work/1b/cd502c6823a37750fd4629b68172fe/CMC/metadata/CMC.celltypes.tsv")
+  parser.add_argument("--sample_meta_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/work/1b/cd502c6823a37750fd4629b68172fe/CMC/metadata/CMC_sample_meta.tsv")
+  parser.add_argument("--write_samples", action="store_true", help="Write samples as individual files")
+  if __name__ == "__main__":
+    known_args, _ = parser.parse_known_args()
+    return known_args
+
+
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--study_dir", type=str, required=True)
-    parser.add_argument("--study_name", type=str, required=True)
-    parser.add_argument("--cell_meta_path", type=str, required=True)
-    parser.add_argument("--sample_meta_path", type=str, required=True)
-    parser.add_argument("--write_samples", action="store_true", help="Write samples as individual files")
-    args = parser.parse_args()
+
+    args = parse_args()
     study_path = args.study_dir
     study_name = args.study_name
     cell_meta_path = args.cell_meta_path
