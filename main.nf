@@ -14,13 +14,13 @@ process downloadCelltypes {
     // if params.author_submitted is true, find cell type assignment name from params.cta_names
     // if params.author_submitted is false, use the preferred cell type assignments from the single cell dimension
 
-    if (params.author_submitted) {
-        cellTypeAssignment_name = params.cta_names.get(study_name)
-        cellTypeAssignment_name = cellTypeAssignment_name.replace(" ", "%20")
-    }
+    //if (params.author_submitted) {
+    def cellTypeAssignment_name = params.cta_names.get(study_name, "none")
+    cellTypeAssignment_name = cellTypeAssignment_name.replace(" ", "%20")
+   // }
     """
 
-   if [ ${params.author_submitted} ]; then
+   if [ ${params.author_submitted} = true ]; then
 
         curl -u "${params.GEMMA_USERNAME}:${params.GEMMA_PASSWORD}" \
         -H "Accept: text/tab-separated-values" \
