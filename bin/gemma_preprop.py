@@ -110,8 +110,7 @@ def write_unique_cells(meta_path, sep='\t', study_name=None,organism=None):
   meta = pd.read_csv(meta_path, sep=sep)
   unique_cells = pd.DataFrame(meta["cell_type"].value_counts()).reset_index()
   unique_cells.to_csv(os.path.join(outdir,f"{study_name}_unique_cells.tsv"), sep='\t', index=False)
-
-
+ 
 def write_as_samples(adata, study_name, organism):
   small_samples = []
   for sample_id in adata.obs["sample_id"].unique():
@@ -143,10 +142,20 @@ def parse_args():
   parser.add_argument("--cell_meta_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/work/1b/cd502c6823a37750fd4629b68172fe/CMC/metadata/CMC.celltypes.tsv")
   parser.add_argument("--sample_meta_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/work/1b/cd502c6823a37750fd4629b68172fe/CMC/metadata/CMC_sample_meta.tsv")
   parser.add_argument("--write_samples", action="store_true", help="Write samples as individual files")
+  parser.add_argument('--gene_mapping', type=str, default="/space/grp/rschwartz/rschwartz/cell_annotation_cortex.nf/meta/gemma_genes.tsv", help='Path to the gene mapping file')  
   if __name__ == "__main__":
     known_args, _ = parser.parse_known_args()
     return known_args
 
+def map_genes(query, gene_mapping):
+    # Check if the "feature_name" column exists in query.var
+  if "feature_name" not in query.var.columns:
+      # Merge gene_mapping with query.var based on the index
+      query.var = query.var.merge(gene_mapping["OFFICIAL_SYMBOL"], left_index=True, right_index=True, how="left")
+      # Rename the merged column to "feature_name"
+      query.var.rename(columns={"OFFICIAL_SYMBOL": "feature_name"}, inplace=True)
+  query.var_names = query.var.index
+  return query
 
 def main():
 
@@ -156,11 +165,20 @@ def main():
     cell_meta_path = args.cell_meta_path
     sample_meta_path = args.sample_meta_path
     write_samples = args.write_samples
+    gene_mapping = args.gene_mapping
+    gene_mapping = pd.read_csv(gene_mapping, sep="\t", header=0)
+    # Drop rows with missing values in the relevant columns
+    gene_mapping = gene_mapping.dropna(subset=["ENSEMBL_ID", "OFFICIAL_SYMBOL"])
+    # Set the index of gene_mapping to "ENSEMBL_ID" and ensure it's unique
+    gene_mapping = gene_mapping.drop_duplicates(subset="ENSEMBL_ID")
+    gene_mapping.set_index("ENSEMBL_ID", inplace=True)
+
     
     all_sample_ids = load_mex(study_path)
     adata = combine_adata(all_sample_ids)
     adata = add_cell_meta(adata, cell_meta_path, study_name=study_name)
     adata = add_sample_meta(adata, sample_meta_path, study_name=study_name)
+    adata = map_genes(adata, gene_mapping)
     organism=adata.obs["organism"][0]
     os.makedirs(organism, exist_ok=True)
     if write_samples:
