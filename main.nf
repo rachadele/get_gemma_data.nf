@@ -15,9 +15,9 @@ process downloadCelltypes {
     // if params.author_submitted is false, use the preferred cell type assignments from the single cell dimension
 
     //if (params.author_submitted) {
-    def cellTypeAssignment_name = params.cta_names.get(study_name, "none")
+    def cellTypeAssignment_name = params.cta_names.get(study_name, "author-submitted")
     cellTypeAssignment_name = cellTypeAssignment_name.replace(" ", "%20")
-   // }
+    //}
     """
 
    if [ ${params.author_submitted} = true ]; then
@@ -84,6 +84,7 @@ process processStudies {
         --cell_meta_path ${celltypes_meta} \\
         --sample_meta_path ${sample_meta} \\
         --study_name ${study_name} \\
+        --gene_mapping "${params.gene_mapping}" \\
         ${params.write_samples ? "--write_samples" : ""}
     """
 }
