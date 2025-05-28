@@ -14,6 +14,19 @@ import os
 import json
 import scipy
 import gzip
+    
+def parse_args():
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--study_dir", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/work/1b/cd502c6823a37750fd4629b68172fe/CMC")
+  parser.add_argument("--study_name", type=str, default="CMC")
+  parser.add_argument("--cell_meta_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/work/1b/cd502c6823a37750fd4629b68172fe/CMC/metadata/CMC.celltypes.tsv")
+  parser.add_argument("--sample_meta_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/work/1b/cd502c6823a37750fd4629b68172fe/CMC/metadata/CMC_sample_meta.tsv")
+  parser.add_argument("--write_samples", action="store_true", help="Write samples as individual files")
+  parser.add_argument('--gene_mapping', type=str, default="/space/grp/rschwartz/rschwartz/cell_annotation_cortex.nf/meta/gemma_genes.tsv", help='Path to the gene mapping file')  
+  if __name__ == "__main__":
+    known_args, _ = parser.parse_known_args()
+    return known_args
+
 
 def load_mex(study_path):
   
@@ -134,18 +147,6 @@ def write_as_samples(adata, study_name, organism):
     else:
       print(f"Combined small samples are still too small to be written as a single file. Skipping writing.")
     
-    
-def parse_args():
-  parser = argparse.ArgumentParser()
-  parser.add_argument("--study_dir", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/work/1b/cd502c6823a37750fd4629b68172fe/CMC")
-  parser.add_argument("--study_name", type=str, default="CMC")
-  parser.add_argument("--cell_meta_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/work/1b/cd502c6823a37750fd4629b68172fe/CMC/metadata/CMC.celltypes.tsv")
-  parser.add_argument("--sample_meta_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/work/1b/cd502c6823a37750fd4629b68172fe/CMC/metadata/CMC_sample_meta.tsv")
-  parser.add_argument("--write_samples", action="store_true", help="Write samples as individual files")
-  parser.add_argument('--gene_mapping', type=str, default="/space/grp/rschwartz/rschwartz/cell_annotation_cortex.nf/meta/gemma_genes.tsv", help='Path to the gene mapping file')  
-  if __name__ == "__main__":
-    known_args, _ = parser.parse_known_args()
-    return known_args
 
 def map_genes(query, gene_mapping):
     # Check if the "feature_name" column exists in query.var
