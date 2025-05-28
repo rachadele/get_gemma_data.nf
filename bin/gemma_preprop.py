@@ -17,10 +17,10 @@ import gzip
     
 def parse_args():
   parser = argparse.ArgumentParser()
-  parser.add_argument("--study_dir", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/work/1b/cd502c6823a37750fd4629b68172fe/CMC")
-  parser.add_argument("--study_name", type=str, default="CMC")
-  parser.add_argument("--cell_meta_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/work/1b/cd502c6823a37750fd4629b68172fe/CMC/metadata/CMC.celltypes.tsv")
-  parser.add_argument("--sample_meta_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/work/1b/cd502c6823a37750fd4629b68172fe/CMC/metadata/CMC_sample_meta.tsv")
+  parser.add_argument("--study_dir", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/study_names_mouse.txt_author_false_sample_split_true/mex_dirs/GSE214244.1")
+  parser.add_argument("--study_name", type=str, default="GSE214244.1")
+  parser.add_argument("--cell_meta_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/study_names_mouse.txt_author_false_sample_split_true/cell_type_assignments/GSE214244.1.celltypes.tsv")
+  parser.add_argument("--sample_meta_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/study_names_mouse.txt_author_false_sample_split_true/metadata/mus_musculus/GSE214244.1_sample_meta.tsv")
   parser.add_argument("--write_samples", action="store_true", help="Write samples as individual files")
   parser.add_argument('--gene_mapping', type=str, default="/space/grp/rschwartz/rschwartz/cell_annotation_cortex.nf/meta/gemma_genes.tsv", help='Path to the gene mapping file')  
   if __name__ == "__main__":
@@ -38,45 +38,53 @@ def load_mex(study_path):
     query_path = os.path.join(study_path, sample_id)
     new_sample_id = sample_id.split("_")[0]
     try:
-        # Attempt to read the 10x mtx data
-        adata = sc.read_10x_mtx(query_path)
-        adata.obs_names_make_unique()
-        all_sample_ids[new_sample_id] = adata
+      # Attempt to read the 10x mtx data
+      adata = sc.read_10x_mtx(query_path)
+      adata.obs_names_make_unique()
+      all_sample_ids[new_sample_id] = adata
     except Exception as e:
-        print(f"Error processing {sample_id} automatically: {e}. Trying manual read.")
-        
-        # If an error occurs, try reading the files manually
-        try:
-            # Read the matrix, genes, and barcodes files manually
-            matrix_path = os.path.join(query_path, "matrix.mtx.gz")
-            genes_path = os.path.join(query_path, "features.tsv.gz")
-            barcodes_path = os.path.join(query_path, "barcodes.tsv.gz")
-            
-            # Load the matrix in CSR format
-            with gzip.open(matrix_path, 'rb') as f:
-                matrix = scipy.io.mmread(f).tocsr()
-            
-            # Read the gene and barcode files
-            with gzip.open(genes_path, 'rt') as f:
-                genes = [line.strip().split("\t") for line in f]
-            with gzip.open(barcodes_path, 'rt') as f:
-                barcodes = [line.strip() for line in f]
-            
-            # Create AnnData object
-            adata = sc.AnnData(X=matrix.T)  # Transpose to match expected shape (cells x genes)
-            adata.var_names = [gene[1] for gene in genes]
-            adata.var_names_make_unique()# gene ids as the variable names
-            adata.obs_names = barcodes  # cell barcodes as the observation names
-            adata.obs_names_make_unique()  # make sure the observation names are unique
-            # Store the AnnData object in the dictionary
-            all_sample_ids[new_sample_id] = adata
-            print(f"Successfully created AnnData for {sample_id} from individual files.")
-        
-        except Exception as manual_e:
-            print(f"Error processing {sample_id} manually: {manual_e}")
-            all_sample_ids[new_sample_id] = None  # Or handle it differently, e.g., skip this sample
-    
+      print(f"Error processing {sample_id} automatically: {e}. Trying manual read.")
+      
+      # If an error occurs, try reading the files manually
+      try:
+          # Read the matrix, genes, and barcodes files manually
+          matrix_path = os.path.join(query_path, "matrix.mtx.gz")
+          genes_path = os.path.join(query_path, "features.tsv.gz")
+          barcodes_path = os.path.join(query_path, "barcodes.tsv.gz")
+          
+          # Load the matrix in CSR format
+          with gzip.open(matrix_path, 'rb') as f:
+              matrix = scipy.io.mmread(f).tocsr()
+          
+          # Read the gene and barcode files
+          with gzip.open(genes_path, 'rt') as f:
+              genes = [line.strip().split("\t") for line in f]
+          with gzip.open(barcodes_path, 'rt') as f:
+              barcodes = [line.strip() for line in f]
+          
+          # Create AnnData object
+          adata = sc.AnnData(X=matrix.T)  # Transpose to match expected shape (cells x genes)
+          adata.var_names = [gene[1] for gene in genes]
+          adata.var_names_make_unique()# gene ids as the variable names
+          adata.obs_names = barcodes  # cell barcodes as the observation names
+          adata.obs_names_make_unique()  # make sure the observation names are unique
+          # Store the AnnData object in the dictionary
+          all_sample_ids[new_sample_id] = adata
+          print(f"Successfully created AnnData for {sample_id} from individual files.")
+      
+      except Exception as manual_e:
+          print(f"Error processing {sample_id} manually: {manual_e}")
+          continue  # Skip this sample if both methods fail
+          #all_sample_ids[new_sample_id] = None  # Or handle it differently, e.g., skip this sample
+  # check that X is not empty
+  
+    if has_expression_data(all_sample_ids[new_sample_id]) is False:
+      print(f"Sample {sample_id} has no expression data. Skipping.")
+      all_sample_ids.pop(new_sample_id, None)
   return all_sample_ids
+
+def has_expression_data(adata):
+    return hasattr(adata, "X") and getattr(adata.X, "nnz", None) not in (0, None)
 
 def check_size(adata):
   if adata.shape[0] < 50:
@@ -126,17 +134,20 @@ def write_unique_cells(meta_path, sep='\t', study_name=None,organism=None):
  
 def write_as_samples(adata, study_name, organism):
   small_samples = []
+  
   for sample_id in adata.obs["sample_id"].unique():
     sample_adata = adata[adata.obs["sample_id"] == sample_id]
+    print(sample_adata.shape)
     # check size
     if not check_size(sample_adata):
       # nee to combine with other samples
-      small_samples.append(sample_id)
+      small_samples.extend(sample_id)
       continue
     #drop columns with only NaNs
     #fille NaN with ""
     sample_adata.obs = sample_adata.obs.fillna("")
     sample_adata.write_h5ad(os.path.join(organism,f"{study_name}_{sample_id}.h5ad"))
+    
   if len(small_samples) > 0:
     print(f"Samples {small_samples} are too small to be written as individual files. They will be combined with other samples.")
     # combine small samples
