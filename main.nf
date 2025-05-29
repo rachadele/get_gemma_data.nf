@@ -15,8 +15,9 @@ process downloadCelltypes {
     // if params.author_submitted is false, use the preferred cell type assignments from the single cell dimension
 
     //if (params.author_submitted) {
-    def cellTypeAssignment_name = params.cta_names.get(study_name, "author-submitted")
-    cellTypeAssignment_name = cellTypeAssignment_name.replace(" ", "%20")
+    def raw_cta_name = params.cta_names.get(study_name) ?: "author-submitted"
+    def cta_name = raw_cta_name.replace(" ", "%20")
+
     //}
     """
 
@@ -25,7 +26,7 @@ process downloadCelltypes {
         curl -u "${params.GEMMA_USERNAME}:${params.GEMMA_PASSWORD}" \
         -H "Accept: text/tab-separated-values" \
         --compressed \
-        "https://dev.gemma.msl.ubc.ca/rest/v2/datasets/${study_name}/cellTypeAssignment?useBioAssayId=true&cellTypeAssignment=${cellTypeAssignment_name}" \
+        "https://dev.gemma.msl.ubc.ca/rest/v2/datasets/${study_name}/cellTypeAssignment?useBioAssayId=true&cellTypeAssignment=${cta_name}" \
         -o "${study_name}.celltypes.tsv"
         
     else
