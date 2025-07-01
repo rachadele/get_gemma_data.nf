@@ -45,7 +45,7 @@ process downloadCelltypes {
 }
 
 process getGemmaMeta {
-   publishDir "${params.outdir}/metadata", mode: 'copy'
+   publishDir "${params.outdir}/metadata/${study_name}", mode: 'copy'
 
     conda "/home/rschwartz/anaconda3/envs/scanpyenv"
  
@@ -65,28 +65,54 @@ process getGemmaMeta {
     """
 }
 
+process write_unique_cells {
+    publishDir "${params.outdir}/unique_cells/${study_name}", mode: 'copy'
+
+    input:
+        tuple val(study_name), val(celltypes_meta)
+
+    output:
+        path "${study_name}_unique_cells.tsv", emit: unique_cell_path
+
+    script:
+   // metadata_file = ${meta_path}.getName()
+    """
+    
+    awk -F'\t' '
+    NR == 1 {
+        for (i = 1; i <= NF; i++) if (\$i == "cell_type") col = i
+        next
+    }
+    { count[\$col]++ }
+    END {
+        print "cell_type\tcount"
+        for (c in count) print c "\t" count[c]
+    }
+    ' "$celltypes_meta" > "${study_name}_unique_cells.tsv"
+
+
+    """
+}
 
 process processStudies {
-    publishDir "${params.outdir}", mode: 'copy'
+    publishDir "${params.outdir}/h5ad/${study_name}", mode: 'copy'
     conda "/home/rschwartz/anaconda3/envs/scanpyenv"
     input:
-        tuple val(study_name), path(study_dir), path(celltypes_meta), path(sample_meta)
+        tuple val(study_name), val(query_name), path(query_path), path(celltypes_meta), path(sample_meta)
 
     output:
        path "**.h5ad", emit: h5ad_paths
-       path "**${study_name}_unique_cells.tsv", emit: unique_cell_path
         
     script:
 
     """
     # Process the cell types metadata
     python /space/grp/rschwartz/rschwartz/get_gemma_data.nf/bin/gemma_preproc.py \\
-        --study_dir ${study_dir} \\
+        --query_path ${query_path} \\
         --cell_meta_path ${celltypes_meta} \\
         --sample_meta_path ${sample_meta} \\
-        --study_name ${study_name} \\
-        --gene_mapping "${params.gene_mapping}" \\
-        ${params.write_samples ? "--write_samples" : ""}
+        --query_name ${query_name} \\
+        --gene_mapping "${params.gene_mapping}"
     """
 }
 
@@ -95,32 +121,38 @@ include { DOWNLOAD_STUDIES_SUBWF } from "${projectDir}/modules/subworkflows/down
 // Workflow definition
 workflow {
 
-    // Define the study names
-  //  study_names = Channel.fromPath(params.study_names).flatMap { file ->
-        // Read the file, split by lines, and trim any extra spaces
-      //  file.readLines().collect { it.trim() }
-  //  }
     
     DOWNLOAD_STUDIES_SUBWF(params.study_names, params.studies_path)
 
     DOWNLOAD_STUDIES_SUBWF.out.study_channel.set { study_channel }
 
+
     downloadCelltypes(study_channel)
     // Get the metadata
     getGemmaMeta(study_channel)
 
+    
+    study_channel.map { study_name, study_dir ->
+        def subdirs = []
+        study_dir.eachDirRecurse { it ->
+            query_name = it.getName()
+            query_path = it
+            subdirs << [study_name, query_name, query_path]
+        }
+        return subdirs
+    }.flatMap().set { query_paths }
+
    // study_dirs = downloadStudies.out.study_dir
     celltypes_meta = downloadCelltypes.out.celltypes_meta
     sample_meta = getGemmaMeta.out.sample_meta
+    celltypes_meta.view()
+    write_unique_cells(celltypes_meta)
 
-    combined_params_1 = study_channel.combine(celltypes_meta, by: 0)
-    combined_params_2 = combined_params_1.combine(sample_meta, by: 0)
-    //combine all of these based on study name
-
-
+    // combine all query paths with meta and cell types
+    combined_all = query_paths.combine(celltypes_meta, by: 0)
+    combined_all = combined_all.combine(sample_meta, by: 0)
     // Process the data
-    processStudies(combined_params_2)
-
+    processStudies(combined_all)
 }
 
 
