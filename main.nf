@@ -80,7 +80,7 @@ process processStudies {
 
     """
     # Process the cell types metadata
-    python /space/grp/rschwartz/rschwartz/get_gemma_data.nf/bin/gemma_preprop.py \\
+    python /space/grp/rschwartz/rschwartz/get_gemma_data.nf/bin/gemma_preproc.py \\
         --study_dir ${study_dir} \\
         --cell_meta_path ${celltypes_meta} \\
         --sample_meta_path ${sample_meta} \\
