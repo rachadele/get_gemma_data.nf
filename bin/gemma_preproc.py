@@ -23,6 +23,7 @@ def parse_args():
   parser.add_argument("--sample_meta_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/work/1d/93b79a110ad273088caf132ec2a4ac/SEA-AD-DLPFC-2024_sample_meta.tsv")
  # parser.add_argument("--write_samples", action="store_true", help="Write samples as individual files")
   parser.add_argument('--gene_mapping', type=str, default="/space/grp/rschwartz/rschwartz/cell_annotation_cortex.nf/meta/gemma_genes.tsv", help='Path to the gene mapping file')  
+  parser.add_argument("--study_name", type=str, default="SEA-AD-DLPFC-2024", help="Name of the study for output files")
   if __name__ == "__main__":
     known_args, _ = parser.parse_known_args()
     return known_args
@@ -117,7 +118,7 @@ def add_sample_meta(adata, meta_path, sep="\t"):
     pass
   return(adata)
   
-def write_as_samples(adata, query_name, organism):
+def write_as_samples(adata, study_name, organism):
   small_samples = []
   
   for sample_id in adata.obs["sample_id"].unique():
@@ -131,7 +132,7 @@ def write_as_samples(adata, query_name, organism):
     #drop columns with only NaNs
     #fille NaN with ""
     sample_adata.obs = sample_adata.obs.fillna("")
-    sample_adata.write_h5ad(f"{query_name}_{sample_id}.h5ad")
+    sample_adata.write_h5ad(f"{study_name}_{sample_id}.h5ad")
     
   if len(small_samples) > 0:
     print(f"Samples {small_samples} are too small to be written as individual files. They will be combined with other samples.")
@@ -162,7 +163,7 @@ def main():
     query_name = args.query_name
     cell_meta_path = args.cell_meta_path
     sample_meta_path = args.sample_meta_path
-   # write_samples = args.write_samples
+    study_name = args.study_name
     gene_mapping = args.gene_mapping
     gene_mapping = pd.read_csv(gene_mapping, sep="\t", header=0)
     # Drop rows with missing values in the relevant columns
@@ -179,11 +180,13 @@ def main():
     adata = add_cell_meta(adata, cell_meta_path)
     adata = add_sample_meta(adata, sample_meta_path)
     adata = map_genes(adata, gene_mapping)
+    # make all columns in obs strings
+    adata.obs = adata.obs.astype(str)
     if check_size(adata) is False:
       os.makedirs("small_samples", exist_ok=True)
-      adata.write_h5ad(os.path.join("small_samples",f"{query_name}.h5ad"))
+      adata.write_h5ad(os.path.join("small_samples",f"{study_name}_{query_name}.h5ad"))
     else:
-      adata.write_h5ad(f"{query_name}.h5ad")
+      adata.write_h5ad(f"{study_name}_{query_name}.h5ad")
         
 if __name__ == "__main__":
     main()

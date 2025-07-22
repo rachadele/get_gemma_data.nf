@@ -10,14 +10,8 @@ process downloadCelltypes {
         tuple val(study_name), path("${study_name}.celltypes.tsv"), emit: celltypes_meta
 
     script:
-    // if params.author_submitted is true, use the author-submitted cell type assignments
-    // if params.author_submitted is true, find cell type assignment name from params.cta_names
-    // if params.author_submitted is false, use the preferred cell type assignments from the single cell dimension
-
-    //if (params.author_submitted) {
-    def raw_cta_name = params.cta_names.get(study_name) ?: "author-submitted"
-    def cta_name = raw_cta_name.replace(" ", "%20")
-
+    
+    def cta_protocol =  "author-submitted"
     //}
     """
 
@@ -26,22 +20,17 @@ process downloadCelltypes {
         curl -u "${params.GEMMA_USERNAME}:${params.GEMMA_PASSWORD}" \
         -H "Accept: text/tab-separated-values" \
         --compressed \
-        "https://dev.gemma.msl.ubc.ca/rest/v2/datasets/${study_name}/cellTypeAssignment?useBioAssayId=true&cellTypeAssignment=${cta_name}" \
+        "https://staging-gemma.msl.ubc.ca/rest/v2/datasets/${study_name}/cellTypeAssignment?useBioAssayId=true&protocol=${cta_protocol}" \
         -o "${study_name}.celltypes.tsv"
         
     else
         curl -u "${params.GEMMA_USERNAME}:${params.GEMMA_PASSWORD}" \
         -H "Accept: text/tab-separated-values" \
         --compressed \
-        "https://dev.gemma.msl.ubc.ca/rest/v2/datasets/${study_name}/cellTypeAssignment?useBioAssayId=true" \
+        "https://staging-gemma.msl.ubc.ca/rest/v2/datasets/${study_name}/cellTypeAssignment?useBioAssayId=true" \
         -o "${study_name}.celltypes.tsv"
     fi
     """
-
-    //        #curl -u "$GEMMA_USERNAME:$GEMMA_PASSWORD" -H "Accept:text/tab-separated-values" \
-    // "https://dev.gemma.msl.ubc.ca/rest/v2/datasets/GSE198014/singleCellDimension" \
-   //  -o GSE198014.celltypes.tsv
-   // awk -F'\t' '$2 == 2' GSE198014.celltypes.tsv > GSE198014.celltypes_filtered.tsv
 }
 
 process getGemmaMeta {
@@ -112,6 +101,7 @@ process processStudies {
         --cell_meta_path ${celltypes_meta} \\
         --sample_meta_path ${sample_meta} \\
         --query_name ${query_name} \\
+        --study_name ${study_name} \\
         --gene_mapping "${params.gene_mapping}"
     """
 }
@@ -145,7 +135,6 @@ workflow {
    // study_dirs = downloadStudies.out.study_dir
     celltypes_meta = downloadCelltypes.out.celltypes_meta
     sample_meta = getGemmaMeta.out.sample_meta
-    celltypes_meta.view()
     write_unique_cells(celltypes_meta)
 
     // combine all query paths with meta and cell types
