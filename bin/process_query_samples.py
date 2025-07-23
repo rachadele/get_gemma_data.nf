@@ -80,7 +80,7 @@ def load_mex(query_path, sample_id):
       adata.obs.index = adata.obs_names + "_" + adata.obs["sample_id"]
       adata.write_h5ad(f"{sample_id}_empty.h5ad")
       #print(f"Error processing {sample_id} manually: {manual_e}")
-      raise Warning(f"Failed to process {sample_id} using both automatic and manual methods: {manual_e}")
+      Warning(f"Failed to process {sample_id} using both automatic and manual methods: {manual_e}")
 
   return adata
 
@@ -138,9 +138,10 @@ def map_genes(query, gene_mapping):
 def main():
 
   args = parse_arguments()
-  sample_id = query_name.split("_")[0]
-  model_path = args.model_path
+
   query_name = args.query_name
+  sample_id = query_name.split("_")[0]
+  
   cell_meta_path = args.cell_meta_path
   sample_meta_path = args.sample_meta_path
   query_path = args.query_path
@@ -154,13 +155,8 @@ def main():
     adata = sc.AnnData(X=csr_matrix((0, 0)))
     # write a fake h5ad to trick nextflow
     adata.write_h5ad(f"{sample_id}_empty.h5ad")
-    raise Warning(f"Sample {sample_id} has no expression data. Skipping.")
+    Warning(f"Sample {sample_id} has no expression data. Skipping.")
   
-  
-  # Load the gene mapping
-  gene_mapping = pd.read_csv(args.gene_mapping, sep="\t", index_col=0)
-  # get gene mapping
-  gene_mapping = pd.read_csv(gene_mapping, sep="\t", header=0)
   # Map genes
   adata = map_genes(adata, gene_mapping)
   

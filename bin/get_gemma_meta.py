@@ -14,13 +14,15 @@ import gemmapy
 def argument_parser():
     parser = argparse.ArgumentParser(description="Preprocess data from GEMMA")
     parser.add_argument("--study_name", type=str, help="Name of the study", default="GSE152715.1")
-    return parser.parse_args()
-
+    if __name__ == "__main__":
+        known_args, _ = parser.parse_known_args()
+        return known_args
 def main():
     args = argument_parser()
-   # username = os.getenv("GEMMA_USERNAME")
-    #password = os.getenv("GEMMA_PASSWORD")
-    client = gemmapy.GemmaPy(auth=["raschwar","7nddtt"], path='dev')
+    args = argument_parser()
+    username = os.getenv("GEMMA_USERNAME")
+    password = os.getenv("GEMMA_PASSWORD")
+    client = gemmapy.GemmaPy(auth=[username, password], path='dev')
     study_name = args.study_name
     samples_raw = client.raw.get_dataset_samples(study_name)
   
