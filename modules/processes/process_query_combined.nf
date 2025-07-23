@@ -2,6 +2,7 @@
 process PROCESS_QUERY_COMBINED {
     conda "/home/rschwartz/anaconda3/envs/scanpyenv"
 	tag "$study_name"
+    publishDir "${params.outdir}/h5ad/${study_name}", mode: 'copy'
 
 	// This process is used to process query datasets using a pre-trained model.
 	// It takes a study name and path, processes the data, and outputs processed and raw data files.
@@ -12,7 +13,7 @@ process PROCESS_QUERY_COMBINED {
     tuple val(study_name), path(study_path), path(celltypes_meta), path(sample_meta)
 
     output:
-    tuple val("${study_name}"), val("${study_name}"), path("${study_name}.h5ad"), emit: processed_query
+    tuple val("${study_name}"), val("${study_name}"), path("**${study_name}.h5ad"), emit: processed_query
 
         
     script:

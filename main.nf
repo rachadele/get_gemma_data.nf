@@ -33,6 +33,8 @@ process downloadCelltypes {
     """
 }
 
+
+
 process getGemmaMeta {
    publishDir "${params.outdir}/metadata/${study_name}", mode: 'copy'
 
@@ -137,12 +139,11 @@ workflow {
                 return results
                 
             }
-        expanded_channel.combine(celltypes_meta by: 0)
+        expanded_channel.combine(celltypes_meta, by: 0)
         .set { expanded_channel }
-        expanded_channel.combine(sample_meta by: 0)
+        expanded_channel.combine(sample_meta, by: 0)
         .set { expanded_channel }
 
-        expanded_channel.view()
         // Process each query sample separately
         PROCESS_QUERY_SAMPLE(expanded_channel)
 
