@@ -106,43 +106,61 @@ process processStudies {
     """
 }
 
-include { DOWNLOAD_STUDIES_SUBWF } from "${projectDir}/modules/subworkflows/download_studies.nf"
+include { DOWNLOAD_STUDIES_SUBWF } from "$projectDir/modules/subworkflows/download_studies.nf"
+include { PROCESS_QUERY_SAMPLE } from "$projectDir/modules/processes/process_query_samples.nf"
+include { PROCESS_QUERY_COMBINED } from "$projectDir/modules/processes/process_query_combined.nf"
 
 // Workflow definition
 workflow {
 
     
     DOWNLOAD_STUDIES_SUBWF(params.study_names, params.studies_path)
-
     DOWNLOAD_STUDIES_SUBWF.out.study_channel.set { study_channel }
-
-
+    
     downloadCelltypes(study_channel)
     // Get the metadata
     getGemmaMeta(study_channel)
-
-    
-    study_channel.map { study_name, study_dir ->
-        def subdirs = []
-        study_dir.eachDirRecurse { it ->
-            query_name = it.getName()
-            query_path = it
-            subdirs << [study_name, query_name, query_path]
-        }
-        return subdirs
-    }.flatMap().set { query_paths }
-
    // study_dirs = downloadStudies.out.study_dir
     celltypes_meta = downloadCelltypes.out.celltypes_meta
     sample_meta = getGemmaMeta.out.sample_meta
     write_unique_cells(celltypes_meta)
 
-    // combine all query paths with meta and cell types
-    combined_all = query_paths.combine(celltypes_meta, by: 0)
-    combined_all = combined_all.combine(sample_meta, by: 0)
-    // Process the data
-    processStudies(combined_all)
+    // If process_samples is true, we will process each query sample separately
+    // and use a different process
+    def processed_queries
+    if (params.process_samples) {
+        // Split study_channel into individual samples
+
+        expanded_channel = study_channel.flatMap { study_name, study_dir ->
+                def results = []
+                study_dir.eachDir { dir -> results << [study_name, dir.name, dir.toString()] }
+                return results
+                
+            }
+        expanded_channel.combine(celltypes_meta by: 0)
+        .set { expanded_channel }
+        expanded_channel.combine(sample_meta by: 0)
+        .set { expanded_channel }
+
+        expanded_channel.view()
+        // Process each query sample separately
+        PROCESS_QUERY_SAMPLE(expanded_channel)
+
+
+    } else {
+        // Process each query without subsampling
+        study_channel.combine(celltypes_meta, by: 0)
+        .set { study_channel }
+        study_channel.combine(sample_meta, by: 0)
+        .set { study_channel }
+
+        PROCESS_QUERY_COMBINED(study_channel)
+        
+    }
+
+
 }
+    
 
 
 workflow.onError = {
