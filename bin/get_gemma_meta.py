@@ -17,6 +17,7 @@ def argument_parser():
     if __name__ == "__main__":
         known_args, _ = parser.parse_known_args()
         return known_args
+    
 def main():
     args = argument_parser()
     args = argument_parser()
@@ -26,7 +27,7 @@ def main():
     study_name = args.study_name
     samples_raw = client.raw.get_dataset_samples(study_name)
   
-    samples = client.get_dataset_samples(study_name)
+    samples = client.get_dataset_samples(study_name, use_processed_quantitation_type=False)
     sample_names = [x for x in samples["sample_name"]]
     sample_ids = [x.id for x in samples_raw.data]
     organisms = [x.array_design.taxon.scientific_name.lower().replace(" ", "_") for x in samples_raw.data]
