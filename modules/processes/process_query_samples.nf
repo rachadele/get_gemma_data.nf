@@ -2,7 +2,7 @@
 process PROCESS_QUERY_SAMPLE {
 	tag "$query_name"
     conda "/home/rschwartz/anaconda3/envs/scanpyenv"
-    publishDir "${params.outdir}/h5ad/${study_name}", mode: 'copy', pattern: "${query_name}.h5ad"
+    publishDir "${params.outdir}/h5ad/${study_name}", mode: 'copy', pattern: "**${query_name}.h5ad"
     // add a pattern to catch small_samples/ subdirectories
     publishDir "${params.outdir}/small_samples/${study_name}", mode: 'copy', pattern: "small_samples/**"
 
@@ -29,7 +29,8 @@ process PROCESS_QUERY_SAMPLE {
         --cell_meta_path ${celltypes_meta} \\
         --sample_meta_path ${sample_meta} \\
         --query_name ${query_name} \\
-        --gene_mapping "${params.gene_mapping}"
+        --gene_mapping "${params.gene_mapping}" \\
+        --study_name ${study_name} 
     """
 
 }

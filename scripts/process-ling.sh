@@ -1,0 +1,1 @@
+nextflow main.nf -profile conda --study_names /space/grp/rschwartz/rschwartz/get_gemma_data.nf/scripts/ling.txt --author_submitted true --outdir Ling-2024 -resume

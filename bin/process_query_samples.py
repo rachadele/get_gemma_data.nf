@@ -29,6 +29,7 @@ def parse_arguments():
   parser.add_argument("--sample_meta_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/work/1d/93b79a110ad273088caf132ec2a4ac/SEA-AD-DLPFC-2024_sample_meta.tsv")
   parser.add_argument('--gene_mapping', type=str, default="/space/grp/rschwartz/rschwartz/cell_annotation_cortex.nf/meta/gemma_genes.tsv", help='Path to the gene mapping file')  
   parser.add_argument("--query_name", type=str, default="SEA-AD-DLPFC-2024", help="Name of the study for output files")
+  parser.add_argument("--study_name", type=str, default="SEA-AD-DLPFC-2024", help="Name of the study for output files")
   if __name__ == "__main__":
     known_args, _ = parser.parse_known_args()
     return known_args
@@ -141,13 +142,14 @@ def main():
 
   query_name = args.query_name
   sample_id = query_name.split("_")[0]
+  study_name = args.study_name
   
   cell_meta_path = args.cell_meta_path
   sample_meta_path = args.sample_meta_path
   query_path = args.query_path
   gene_mapping = args.gene_mapping
   gene_mapping = pd.read_csv(gene_mapping, sep="\t", header=0)
- 
+  
   # Load the query data
   adata = load_mex(query_path, sample_id)
 
@@ -173,7 +175,7 @@ def main():
     adata.write_h5ad(os.path.join("small_samples",f"{query_name}.h5ad"))
   else:
     adata.obs["cell_id"] = adata.obs.index
-    adata.write_h5ad(f"{query_name}.h5ad")
+    adata.write_h5ad(f"{study_name}_{query_name}.h5ad")
         
 if __name__ == "__main__":
     main()
