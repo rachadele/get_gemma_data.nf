@@ -24,12 +24,12 @@ import numpy as np
 
 def parse_arguments():
   parser = argparse.ArgumentParser()
-  parser.add_argument("--query_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/work/1d/93b79a110ad273088caf132ec2a4ac/1293348_H21.33.038")
-  parser.add_argument("--cell_meta_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/work/1d/93b79a110ad273088caf132ec2a4ac/SEA-AD-DLPFC-2024.celltypes.tsv")
-  parser.add_argument("--sample_meta_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/work/1d/93b79a110ad273088caf132ec2a4ac/SEA-AD-DLPFC-2024_sample_meta.tsv")
+  parser.add_argument("--query_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/study_names_mouse.txt_author_true_process_samples_true/mex/GSE247339.2/1051970_GSM7887408")
+  parser.add_argument("--cell_meta_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/study_names_mouse.txt_author_true_process_samples_true/cell_type_assignments/GSE247339.2.celltypes.tsv")
+  parser.add_argument("--sample_meta_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/study_names_mouse.txt_author_true_process_samples_true/metadata/GSE247339.2/mus_musculus/GSE247339.2_sample_meta.tsv")
   parser.add_argument('--gene_mapping', type=str, default="/space/grp/rschwartz/rschwartz/cell_annotation_cortex.nf/meta/gemma_genes.tsv", help='Path to the gene mapping file')  
-  parser.add_argument("--query_name", type=str, default="SEA-AD-DLPFC-2024", help="Name of the study for output files")
-  parser.add_argument("--study_name", type=str, default="SEA-AD-DLPFC-2024", help="Name of the study for output files")
+  parser.add_argument("--query_name", type=str, default="1051970_GSM7887408", help="Name of the study for output files")
+  parser.add_argument("--study_name", type=str, default="GSE247339.2", help="Name of the study for output files")
   if __name__ == "__main__":
     known_args, _ = parser.parse_known_args()
     return known_args

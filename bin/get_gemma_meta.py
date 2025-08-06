@@ -26,7 +26,17 @@ def main():
     client = gemmapy.GemmaPy(auth=[username, password], path='dev')
     study_name = args.study_name
     samples_raw = client.raw.get_dataset_samples(study_name)
-  
+    dataset_info = client.get_dataset_annotations(study_name)
+    
+    # store assay type and platform
+    assay = dataset_info[dataset_info["class_name"]=="assay"]["term_name"].values
+    
+    if len(assay) == 1:
+        assay = assay[0]
+    else:
+        assay = assay.tolist().join("|")
+    
+
     samples = client.get_dataset_samples(study_name, use_processed_quantitation_type=False)
     sample_names = [x for x in samples["sample_name"]]
     sample_ids = [x.id for x in samples_raw.data]
@@ -42,9 +52,12 @@ def main():
     # combine all dfs
     sample_meta_combined = pd.concat(sample_meta_updated2)
     sample_meta_combined.drop_duplicates(subset=["sample_id", "category"], inplace=True)
+    
     outdir = organisms[0]
     os.makedirs(outdir, exist_ok=True)
     sample_meta_df = sample_meta_combined.pivot(index=["sample_id","sample_name","organism"], columns="category",values="value").reset_index()
+    sample_meta_df["assay"] = assay
+    
     sample_meta_df.to_csv(os.path.join(outdir,f"{study_name}_sample_meta.tsv"), index=False, sep="\t")
     
 
