@@ -29,14 +29,12 @@ def main():
     dataset_info = client.get_dataset_annotations(study_name)
     
     # store assay type and platform
-    assay = dataset_info[dataset_info["class_name"]=="assay"]["term_name"].values
-    
-    if len(assay) == 1:
-        assay = assay[0]
-    else:
-        assay = assay.tolist().join("|")
-    
-
+    # try except
+    try:
+        assay = dataset_info[dataset_info["class_name"]=="assay"]["term_name"].values
+        assay=assay[0]
+    except IndexError:
+        assay = "unknown"
     samples = client.get_dataset_samples(study_name, use_processed_quantitation_type=False)
     sample_names = [x for x in samples["sample_name"]]
     sample_ids = [x.id for x in samples_raw.data]
@@ -58,7 +56,7 @@ def main():
     sample_meta_df = sample_meta_combined.pivot(index=["sample_id","sample_name","organism"], columns="category",values="value").reset_index()
     sample_meta_df["assay"] = assay
     
-    sample_meta_df.to_csv(os.path.join(outdir,f"{study_name}_sample_meta.tsv"), index=False, sep="\t")
+    sample_meta_df.to_csv(f"{study_name}_sample_meta.tsv", index=False, sep="\t")
     
 
     
