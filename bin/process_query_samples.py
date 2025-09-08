@@ -171,10 +171,10 @@ def main():
    
   if check_size(adata) is False:
     os.makedirs("small_samples", exist_ok=True)
-    adata.obs["cell_id"] = adata.obs.index
+    #adata.obs["cell_id"] = adata.obs.index
     adata.write_h5ad(os.path.join("small_samples",f"{query_name}.h5ad"))
   else:
-    adata.obs["cell_id"] = adata.obs.index
+   # adata.obs["cell_id"] = adata.obs.index
     adata.write_h5ad(f"{study_name}_{query_name}.h5ad")
         
 if __name__ == "__main__":
