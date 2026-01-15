@@ -13,7 +13,7 @@ import gemmapy
 
 def argument_parser():
     parser = argparse.ArgumentParser(description="Preprocess data from GEMMA")
-    parser.add_argument("--study_name", type=str, help="Name of the study", default="GSE124952")
+    parser.add_argument("--study_name", type=str, help="Name of the study", default="GSE181021.2")
     if __name__ == "__main__":
         known_args, _ = parser.parse_known_args()
         return known_args
@@ -23,11 +23,11 @@ def argument_parser():
 def extract_meta(df_list, sample_ids, sample_names):
     values = [df.assign(sample_id=sample_ids[i]) for i, df in enumerate(df_list)]
     #factor_values = [df.assign(organism=organisms[i]) for i, df in enumerate(factor_values)]
-    values = [df.assign(sample_name=sample_names[i]) for i, df in enumerate(df_list)]
+    values = [df.assign(sample_name=sample_names[i]) for i, df in enumerate(values)]
 
     values_combined = pd.concat(values)
     values_combined.drop_duplicates(subset=["sample_id", "category"], inplace=True)
-    values_df = values_combined.pivot(index=["sample_id","sample_name","organism"], columns="category",values="value").reset_index()
+    values_df = values_combined.pivot(index=["sample_id","sample_name"], columns="category",values="value").reset_index()
     return values_df
     
     
