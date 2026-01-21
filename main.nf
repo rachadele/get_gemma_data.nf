@@ -85,28 +85,6 @@ process write_unique_cells {
     """
 }
 
-process processStudies {
-    publishDir "${params.outdir}/h5ad/${study_name}", mode: 'copy'
-    conda "/home/rschwartz/anaconda3/envs/scanpyenv"
-    input:
-        tuple val(study_name), val(query_name), path(query_path), path(celltypes_meta), path(sample_meta)
-
-    output:
-       path "**.h5ad", emit: h5ad_paths
-        
-    script:
-
-    """
-    # Process the cell types metadata
-    python /space/grp/rschwartz/rschwartz/get_gemma_data.nf/bin/gemma_preproc.py \\
-        --query_path ${query_path} \\
-        --cell_meta_path ${celltypes_meta} \\
-        --sample_meta_path ${sample_meta} \\
-        --query_name ${query_name} \\
-        --study_name ${study_name} \\
-        --gene_mapping "${params.gene_mapping}"
-    """
-}
 
 include { DOWNLOAD_STUDIES_SUBWF } from "$projectDir/modules/subworkflows/download_studies.nf"
 include { PROCESS_QUERY_SAMPLE } from "$projectDir/modules/processes/process_query_samples.nf"
