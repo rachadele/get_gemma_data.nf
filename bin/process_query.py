@@ -21,14 +21,15 @@ import scipy
 import gzip
 import random
 import numpy as np
+import warnings
 
 def parse_arguments():
   parser = argparse.ArgumentParser()
-  parser.add_argument("--study_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/work/1d/93b79a110ad273088caf132ec2a4ac/1293348_H21.33.038")
-  parser.add_argument("--cell_meta_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/work/1d/93b79a110ad273088caf132ec2a4ac/SEA-AD-DLPFC-2024.celltypes.tsv")
-  parser.add_argument("--sample_meta_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/work/1d/93b79a110ad273088caf132ec2a4ac/SEA-AD-DLPFC-2024_sample_meta.tsv")
-  parser.add_argument('--gene_mapping', type=str, default="/space/grp/rschwartz/rschwartz/cell_annotation_cortex.nf/meta/gemma_genes.tsv", help='Path to the gene mapping file')  
-  parser.add_argument("--study_name", type=str, default="SEA-AD-DLPFC-2024", help="Name of the study for output files")
+  parser.add_argument("--study_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/work/cd/45e7da9ad5fd22d22a1cd08a7aae5a/GSE124952")
+  parser.add_argument("--cell_meta_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/work/cd/45e7da9ad5fd22d22a1cd08a7aae5a/GSE124952.celltypes.tsv")
+  parser.add_argument("--sample_meta_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/work/cd/45e7da9ad5fd22d22a1cd08a7aae5a/GSE124952_sample_meta.tsv")
+  parser.add_argument('--gene_mapping', type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/meta/gemma_genes.tsv", help='Path to the gene mapping file')  
+  parser.add_argument("--study_name", type=str, default="GSE124952", help="Name of the study for output files")
   if __name__ == "__main__":
     known_args, _ = parser.parse_known_args()
     return known_args
@@ -104,11 +105,18 @@ def add_cell_meta(adata, cell_meta_path, sep="\t"):
   meta = meta.set_index("combined_id")
   # Filter `meta` to exclude columns that overlap with `adata.obs`
   meta_cleaned = meta.loc[:, ~meta.columns.isin(adata.obs.columns)]
+  
   # Perform the join operation
+  # join on "combined_id" which is the index of meta_cleaned and adata.obs index
   adata.obs = adata.obs.join(meta_cleaned, how="left")
+  n_before = adata.shape[0]
   # drop NaNs in cell_type column
   adata = adata[~adata.obs["cell_type"].isna()]
-  return(adata)
+  n_after = adata.shape[0]
+  if n_after < n_before:
+      dropped = n_before - n_after
+      warnings.warn(f"{dropped} cells were dropped after joining cell metadata (NaN in 'cell_type'). Check for mismatches between adata.obs and cell_meta_path. First 5 dropped cell indices: {adata.obs[adata.obs['cell_type'].isna()].index[:5].tolist()}")
+  return adata
 
 def add_sample_meta(adata, meta_path, sep="\t"):
   meta = pd.read_csv(meta_path, sep=sep)
@@ -166,9 +174,9 @@ def main():
     all_samples[new_sample_id] = load_mex(query_path, new_sample_id)
   
   combined_adata = sc.concat(all_samples, label="sample_id", join="inner") 
-  combined_adata.obs["cell_id"] = combined_adata.obs.index
-  combined_adata.obs_names = combined_adata.obs["cell_id"].astype(str) + "_" + combined_adata.obs["sample_id"].astype(str)
-  # save unprocessed adata
+  #combined_adata.obs["cell_id"] = combined_adata.obs.index
+  #combined_adata.obs["combined_id"]= combined_adata.obs["cell_id"].astype(str) + "_" + combined_adata.obs["sample_id"].astype(str)
+  #combined_adata.obs.set_index("combined_id", inplace=True)
 
   combined_adata = map_genes(combined_adata, gene_mapping)
   
