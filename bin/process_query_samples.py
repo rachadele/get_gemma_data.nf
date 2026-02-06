@@ -111,11 +111,11 @@ def add_sample_meta(adata, meta_path, sep="\t"):
   meta["sample_id"] = meta["sample_id"].apply(str)
   # Perform the join operation
   adata.obs = adata.obs.merge(meta, left_on="sample_id", right_on="sample_id", how="left", suffixes=("", "_y"))
-  adata.obs.rename(columns={"organism part": "region", "developmental_stage": "dev_stage", "biological sex": "sex"}, inplace=True)
-  try:
-    adata.obs["region"]=adata.obs["region"].replace("adult ","")
-  except:
-    pass
+ # adata.obs.rename(columns={"organism part": "region", "developmental_stage": "dev_stage", "biological sex": "sex"}, inplace=True)
+ # try:
+  #  adata.obs["region"]=adata.obs["region"].replace("adult ","")
+#  except:
+ #   pass
   return(adata)
 
 
