@@ -86,6 +86,25 @@ process write_unique_cells {
 }
 
 
+process standardizeMetadata {
+    publishDir "${params.outdir}/metadata_standardized/${study_name}", mode: 'copy'
+
+    conda "/home/rschwartz/anaconda3/envs/scanpyenv"
+
+    input:
+        tuple val(study_name), path(sample_meta)
+
+    output:
+        tuple val(study_name), path("${study_name}_sample_meta_std.tsv"), emit: sample_meta
+
+    script:
+    """
+    python $projectDir/bin/standardize_metadata.py \\
+        ${sample_meta} \\
+        -o ${study_name}_sample_meta_std.tsv
+    """
+}
+
 include { DOWNLOAD_STUDIES_SUBWF } from "$projectDir/modules/subworkflows/download_studies.nf"
 include { PROCESS_QUERY_SAMPLE } from "$projectDir/modules/processes/process_query_samples.nf"
 include { PROCESS_QUERY_COMBINED } from "$projectDir/modules/processes/process_query_combined.nf"
@@ -94,7 +113,7 @@ include { PROCESS_QUERY_COMBINED } from "$projectDir/modules/processes/process_q
 workflow {
 
     
-    DOWNLOAD_STUDIES_SUBWF(params.study_names, params.studies_path)
+    DOWNLOAD_STUDIES_SUBWF(params.study_names, params.study_list, params.studies_path)
     DOWNLOAD_STUDIES_SUBWF.out.study_channel.set { study_channel }
     
     downloadCelltypes(study_channel)
@@ -102,7 +121,8 @@ workflow {
     getGemmaMeta(study_channel)
    // study_dirs = downloadStudies.out.study_dir
     celltypes_meta = downloadCelltypes.out.celltypes_meta
-    sample_meta = getGemmaMeta.out.sample_meta
+    standardizeMetadata(getGemmaMeta.out.sample_meta)
+    sample_meta = standardizeMetadata.out.sample_meta
     write_unique_cells(celltypes_meta)
 
     // If process_samples is true, we will process each query sample separately
