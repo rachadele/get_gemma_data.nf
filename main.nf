@@ -113,7 +113,7 @@ include { PROCESS_QUERY_COMBINED } from "$projectDir/modules/processes/process_q
 workflow {
 
     
-    DOWNLOAD_STUDIES_SUBWF(params.study_names, params.study_list, params.studies_path)
+    DOWNLOAD_STUDIES_SUBWF(params.study_names, params.study_file, params.study_paths)
     DOWNLOAD_STUDIES_SUBWF.out.study_channel.set { study_channel }
     
     downloadCelltypes(study_channel)

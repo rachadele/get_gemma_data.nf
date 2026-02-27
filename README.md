@@ -59,11 +59,11 @@ Located at `meta/gemma_genes.tsv`, containing ENSEMBL_ID to OFFICIAL_SYMBOL mapp
 ```bash
 # Using a study names file
 nextflow run main.nf -profile conda \
-  --study_names study_names_human.txt
+  --study-names study_names_human.txt
 
 # Using an existing studies directory
 nextflow run main.nf -profile conda \
-  --studies_path /path/to/existing/studies
+  --study-paths /path/to/existing/studies
 ```
 
 ### Processing Modes
@@ -71,12 +71,12 @@ nextflow run main.nf -profile conda \
 ```bash
 # Combined mode (default) - one H5AD per study
 nextflow run main.nf -profile conda \
-  --study_names study_names_human.txt \
+  --study-names study_names_human.txt \
   --process_samples false
 
 # Sample mode - one H5AD per sample
 nextflow run main.nf -profile conda \
-  --study_names study_names_human.txt \
+  --study-names study_names_human.txt \
   --process_samples true
 ```
 
@@ -84,7 +84,7 @@ nextflow run main.nf -profile conda \
 
 ```bash
 nextflow run main.nf -profile conda \
-  --study_names study_names_human.txt \
+  --study-names study_names_human.txt \
   --author_submitted true \
   --outdir custom_output_dir \
   -resume
@@ -94,14 +94,15 @@ nextflow run main.nf -profile conda \
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `--study_names` | Path to file with study IDs (one per line) | `null` |
-| `--studies_path` | Path to pre-downloaded studies directory | `null` |
+| `--study-names` | Path to file with study IDs (one per line) | `null` |
+| `--study-file` | Comma- or space-separated study IDs (inline) | `null` |
+| `--study-paths` | Path to pre-downloaded studies directory | `null` |
 | `--process_samples` | Process each sample separately (`true`) or combined (`false`) | `false` |
 | `--author_submitted` | Use author-submitted cell types | `false` |
 | `--gene_mapping` | Path to gene mapping TSV | `meta/gemma_genes.tsv` |
 | `--outdir` | Output directory | Auto-generated based on params |
 
-**Note:** You must provide either `--study_names` OR `--studies_path`, but not both.
+**Note:** You must provide exactly one of `--study-names`, `--study-file`, or `--study-paths`.
 
 ## Output Structure
 
@@ -194,7 +195,7 @@ process {
 
 Use the `-resume` flag to continue from the last successful checkpoint:
 ```bash
-nextflow run main.nf -profile conda --study_names study_names.txt -resume
+nextflow run main.nf -profile conda --study-names study_names.txt -resume
 ```
 
 ## Troubleshooting

@@ -14,19 +14,19 @@ export GEMMA_USERNAME="your_username"
 export GEMMA_PASSWORD="your_password"
 
 # Basic run from a study list file
-nextflow run main.nf -profile conda --study_names study_names_human.txt
+nextflow run main.nf -profile conda --study-names study_names_human.txt
 
 # Resume a failed/partial run
-nextflow run main.nf -profile conda --study_names study_names_human.txt -resume
+nextflow run main.nf -profile conda --study-names study_names_human.txt -resume
 
 # Use a pre-downloaded studies directory instead of downloading
-nextflow run main.nf -profile conda --studies_path /path/to/existing/studies
+nextflow run main.nf -profile conda --study-paths /path/to/existing/studies
 
 # Per-sample mode (one H5AD per sample instead of one per study)
-nextflow run main.nf -profile conda --study_names study_names_human.txt --process_samples true
+nextflow run main.nf -profile conda --study-names study_names_human.txt --process_samples true
 
 # Author-submitted cell types (default: false, uses curated assignments)
-nextflow run main.nf -profile conda --study_names study_names_human.txt --author_submitted true
+nextflow run main.nf -profile conda --study-names study_names_human.txt --author_submitted true
 ```
 
 The `--outdir` is auto-generated from params: `{study_names}_author_{author_submitted}_process_samples_{process_samples}`.
@@ -35,13 +35,14 @@ The `--outdir` is auto-generated from params: `{study_names}_author_{author_subm
 
 | Parameter | Default | Notes |
 |-----------|---------|-------|
-| `--study_names` | null | Text file, one GEMMA study ID per line |
-| `--studies_path` | null | Path to pre-downloaded MEX directory |
+| `--study-names` | null | Text file, one GEMMA study ID per line |
+| `--study-file` | null | Comma- or space-separated study IDs (inline) |
+| `--study-paths` | null | Path to pre-downloaded MEX directory |
 | `--process_samples` | false | true = one H5AD per sample |
 | `--author_submitted` | false | Cell type assignment source |
 | `--gene_mapping` | `meta/gemma_genes.tsv` | ENSEMBL_ID → OFFICIAL_SYMBOL |
 
-Provide exactly one of `--study_names` or `--studies_path`.
+Provide exactly one of `--study-names`, `--study-file`, or `--study-paths`.
 
 ## Architecture
 
@@ -68,7 +69,7 @@ meta/
 
 ## Workflow Data Flow
 
-1. **Download**: `DOWNLOAD_STUDIES_SUBWF` either reads study IDs from a file and runs `gemma-cli-staging`, or discovers existing directories from `--studies_path`. Emits `(study_name, study_dir)` tuples.
+1. **Download**: `DOWNLOAD_STUDIES_SUBWF` either reads study IDs from a file and runs `gemma-cli-staging`, or discovers existing directories from `--study-paths`. Emits `(study_name, study_dir)` tuples.
 2. **Cell types**: `downloadCelltypes` fetches cell type assignments via GEMMA REST API (curl). The `author_submitted` param controls which protocol endpoint is used.
 3. **Sample metadata**: `getGemmaMeta` calls `get_gemma_meta.py` (uses `gemmapy` Python client) to fetch and pivot sample characteristics.
 4. **Metadata standardization**: `standardizeMetadata` renames columns using the `RENAME_MAP` in `standardize_metadata.py` (e.g., "biological sex" → "sex", "organism part" → "region").
@@ -86,7 +87,7 @@ Runs on SLURM with `-C thrd64 --cpus-per-task=10`. Queue size is 90. Edit `nextf
 
 ## Utility Scripts
 
-`bin/extract_downloaded_mex.sh <work_dir> <new_dir>` — copies MEX directories out of Nextflow's `work/` directory into a flat structure. Useful for recovering data when re-running with `--studies_path`.
+`bin/extract_downloaded_mex.sh <work_dir> <new_dir>` — copies MEX directories out of Nextflow's `work/` directory into a flat structure. Useful for recovering data when re-running with `--study-paths`.
 
 ## Output Layout
 
