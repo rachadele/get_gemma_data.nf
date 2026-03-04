@@ -10,12 +10,17 @@ workflow DOWNLOAD_STUDIES_SUBWF {
 
     main:
     if (study_names) {
-        Channel
-            .fromPath(params.study_names)
-            .flatMap { file -> file.readLines().collect { it.trim() }.findAll { it } }
-            .set { study_names }
+        def study_names_ch
+        if (file(study_names).exists()) {
+            study_names_ch = Channel
+                .fromPath(study_names)
+                .flatMap { f -> f.readLines().collect { it.trim() }.findAll { it } }
+        } else {
+            study_names_ch = Channel
+                .from(study_names.split(/[,\s]+/).collect { it.trim() }.findAll { it })
+        }
 
-        DOWNLOAD_STUDIES(study_names)
+        DOWNLOAD_STUDIES(study_names_ch)
             .set { study_channel }
 
     } else if (study_file) {
