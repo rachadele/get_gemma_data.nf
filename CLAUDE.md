@@ -14,19 +14,19 @@ export GEMMA_USERNAME="your_username"
 export GEMMA_PASSWORD="your_password"
 
 # Basic run from a study list file
-nextflow run main.nf -profile conda --study-names study_names_human.txt
+nextflow run main.nf -profile conda --study_names study_names_human.txt
 
 # Resume a failed/partial run
-nextflow run main.nf -profile conda --study-names study_names_human.txt -resume
+nextflow run main.nf -profile conda --study_names study_names_human.txt -resume
 
 # Use a pre-downloaded studies directory instead of downloading
-nextflow run main.nf -profile conda --study-paths /path/to/existing/studies
+nextflow run main.nf -profile conda --study_paths /path/to/existing/studies
 
 # Per-sample mode (one H5AD per sample instead of one per study)
-nextflow run main.nf -profile conda --study-names study_names_human.txt --process_samples true
+nextflow run main.nf -profile conda --study_names study_names_human.txt --process_samples true
 
 # Author-submitted cell types (default: false, uses curated assignments)
-nextflow run main.nf -profile conda --study-names study_names_human.txt --author_submitted true
+nextflow run main.nf -profile conda --study_names study_names_human.txt --author_submitted true
 ```
 
 The `--outdir` is auto-generated from params: `{study_names}_author_{author_submitted}_process_samples_{process_samples}`.
@@ -35,14 +35,14 @@ The `--outdir` is auto-generated from params: `{study_names}_author_{author_subm
 
 | Parameter | Default | Notes |
 |-----------|---------|-------|
-| `--study-names` | null | Text file, one GEMMA study ID per line |
-| `--study-file` | null | Comma- or space-separated study IDs (inline) |
-| `--study-paths` | null | Path to pre-downloaded MEX directory |
+| `--study_names` | null | Text file, one GEMMA study ID per line |
+| `--study_file` | null | Comma- or space-separated study IDs (inline) |
+| `--study_paths` | null | Path to pre-downloaded MEX directory |
 | `--process_samples` | false | true = one H5AD per sample |
 | `--author_submitted` | false | Cell type assignment source |
 | `--gene_mapping` | `meta/gemma_genes.tsv` | ENSEMBL_ID → OFFICIAL_SYMBOL |
 
-Provide exactly one of `--study-names`, `--study-file`, or `--study-paths`.
+Provide exactly one of `--study_names`, `--study_file`, or `--study_paths`.
 
 ## Architecture
 

@@ -20,7 +20,7 @@ workflow DOWNLOAD_STUDIES_SUBWF {
 
     } else if (study_file) {
         Channel
-            .from(params.study_file.split(/[,\s]+/).collect { it.trim() }.findAll { it })
+            .from(study_file.split(/[,\s]+/).collect { it.trim() }.findAll { it })
             .set { study_names }
 
         DOWNLOAD_STUDIES(study_names)
@@ -28,14 +28,14 @@ workflow DOWNLOAD_STUDIES_SUBWF {
 
     } else if (study_paths) {
         study_channel = Channel
-            .fromPath(params.study_paths)
+            .fromPath(study_paths)
             .flatMap { path ->
                 def results = []
                 path.eachDir { dir -> results << [dir.name, dir] }
                 return results
             }
     } else {
-        exit 1, "Error: You must provide one of '--study-names', '--study-file', or '--study-paths'."
+        exit 1, "Error: You must provide one of '--study_names', '--study_file', or '--study_paths'."
     }
 
     emit: study_channel
