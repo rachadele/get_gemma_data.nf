@@ -59,11 +59,15 @@ Located at `meta/gemma_genes.tsv`, containing ENSEMBL_ID to OFFICIAL_SYMBOL mapp
 ```bash
 # Using a study names file
 nextflow run main.nf -profile conda \
-  --study-names study_names_human.txt
+  --study_names study_names_human.txt
+
+# Using a direct study ID
+nextflow run main.nf -profile conda \
+  --study_names GSE237718
 
 # Using an existing studies directory
 nextflow run main.nf -profile conda \
-  --study-paths /path/to/existing/studies
+  --study_paths /path/to/existing/studies
 ```
 
 ### Processing Modes
@@ -71,12 +75,12 @@ nextflow run main.nf -profile conda \
 ```bash
 # Combined mode (default) - one H5AD per study
 nextflow run main.nf -profile conda \
-  --study-names study_names_human.txt \
+  --study_names study_names_human.txt \
   --process_samples false
 
 # Sample mode - one H5AD per sample
 nextflow run main.nf -profile conda \
-  --study-names study_names_human.txt \
+  --study_names study_names_human.txt \
   --process_samples true
 ```
 
@@ -84,9 +88,8 @@ nextflow run main.nf -profile conda \
 
 ```bash
 nextflow run main.nf -profile conda \
-  --study-names study_names_human.txt \
+  --study_names study_names_human.txt \
   --author_submitted true \
-  --outdir custom_output_dir \
   -resume
 ```
 
@@ -94,15 +97,15 @@ nextflow run main.nf -profile conda \
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `--study-names` | Path to file with study IDs (one per line) | `null` |
-| `--study-file` | Comma- or space-separated study IDs (inline) | `null` |
-| `--study-paths` | Path to pre-downloaded studies directory | `null` |
+| `--study_names` | Path to file with study IDs (one per line), or a single study ID | `null` |
+| `--study_file` | Comma- or space-separated study IDs (inline) | `null` |
+| `--study_paths` | Path to pre-downloaded studies directory | `null` |
 | `--process_samples` | Process each sample separately (`true`) or combined (`false`) | `false` |
 | `--author_submitted` | Use author-submitted cell types | `false` |
 | `--gene_mapping` | Path to gene mapping TSV | `meta/gemma_genes.tsv` |
-| `--outdir` | Output directory | Auto-generated based on params |
+| `--outdir` | Output directory | Auto-generated: `{study_names}_author_{author_submitted}_process_samples_{process_samples}` |
 
-**Note:** You must provide exactly one of `--study-names`, `--study-file`, or `--study-paths`.
+**Note:** You must provide exactly one of `--study_names`, `--study_file`, or `--study_paths`.
 
 ## Output Structure
 
@@ -116,10 +119,12 @@ nextflow run main.nf -profile conda \
 │           └── barcodes.tsv.gz
 ├── cell_type_assignments/        # Cell type annotations
 │   └── {study}.celltypes.tsv
-├── metadata/                     # Sample metadata
+├── metadata/                     # Sample metadata (raw)
 │   └── {study}/
 │       └── {organism}/
 │           └── {study}_sample_meta.tsv
+├── metadata_standardized/        # Column-renamed metadata
+│   └── {study}_sample_meta.tsv
 ├── unique_cells/                 # Cell type count summaries
 │   └── {study}/
 │       └── {study}_unique_cells.tsv
@@ -134,9 +139,9 @@ nextflow run main.nf -profile conda \
 
 ### H5AD Files
 AnnData format containing:
-- **X**: Sparse expression matrix (CSR format)
-- **obs**: Cell metadata (sample_id, cell_type, region, sex, dev_stage, organism, assay)
-- **var**: Gene annotations (feature_name, ENSEMBL_ID)
+- **X**: Sparse expression matrix (CSR format, raw counts)
+- **obs**: Cell metadata — `sample_id`, `cell_type`, `cell_type_uri`, `region`, `sex`, `dev_stage`, `organism`, `assay`, `donor_id`, plus study-specific columns
+- **var**: index = ENSEMBL_ID, `feature_name` = OFFICIAL_SYMBOL
 
 ### Cell Type Assignments TSV
 | Column | Description |
@@ -195,7 +200,7 @@ process {
 
 Use the `-resume` flag to continue from the last successful checkpoint:
 ```bash
-nextflow run main.nf -profile conda --study-names study_names.txt -resume
+nextflow run main.nf -profile conda --study_names study_names.txt -resume
 ```
 
 ## Troubleshooting
