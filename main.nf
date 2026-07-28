@@ -52,6 +52,8 @@ process getGemmaMeta {
 
     python /space/grp/rschwartz/rschwartz/get_gemma_data.nf/bin/get_gemma_meta.py \\
         --study_name ${study_name} \\
+        --gemma_username ${params.GEMMA_USERNAME} \\
+        --gemma_password ${params.GEMMA_PASSWORD} \\
 
     """
 }

@@ -15,8 +15,8 @@ import gemmapy
 def argument_parser():
     parser = argparse.ArgumentParser(description="Preprocess data from GEMMA")
     parser.add_argument("--study_name", type=str, help="Name of the study", default="GSE152715.1")
-    parser.add_argument('--gemma_username', type=str, default="raschwar")
-    parser.add_argument('--gemma_password', type=str, default="7nddtt")
+    parser.add_argument('--gemma_username', type=str, required=True)
+    parser.add_argument('--gemma_password', type=str, required=True)
     return parser.parse_args()
 
 def main():
