@@ -93,6 +93,21 @@ nextflow run main.nf -profile conda \
   -resume
 ```
 
+### Test Profile
+
+A `test` profile runs the full pipeline end-to-end against a single small study
+(`GSE231868`, ~65MB) using the local executor instead of SLURM. It still hits
+the live GEMMA staging API, so `GEMMA_USERNAME`/`GEMMA_PASSWORD` must be set:
+
+```bash
+nextflow run main.nf -profile conda,test
+```
+
+Combine with other params to test alternate code paths, e.g. sample mode:
+```bash
+nextflow run main.nf -profile conda,test --process_samples true
+```
+
 ## Parameters
 
 | Parameter | Description | Default |
