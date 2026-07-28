@@ -14,19 +14,19 @@ export GEMMA_USERNAME="your_username"
 export GEMMA_PASSWORD="your_password"
 
 # Basic run from a study list file
-nextflow run main.nf -profile conda --study_names study_names_human.txt
+nextflow run main.nf -profile conda --study_names study_lists/study_names_human.txt
 
 # Resume a failed/partial run
-nextflow run main.nf -profile conda --study_names study_names_human.txt -resume
+nextflow run main.nf -profile conda --study_names study_lists/study_names_human.txt -resume
 
 # Use a pre-downloaded studies directory instead of downloading
 nextflow run main.nf -profile conda --study_paths /path/to/existing/studies
 
 # Per-sample mode (one H5AD per sample instead of one per study)
-nextflow run main.nf -profile conda --study_names study_names_human.txt --process_samples true
+nextflow run main.nf -profile conda --study_names study_lists/study_names_human.txt --process_samples true
 
 # Author-submitted cell types (default: false, uses curated assignments)
-nextflow run main.nf -profile conda --study_names study_names_human.txt --author_submitted true
+nextflow run main.nf -profile conda --study_names study_lists/study_names_human.txt --author_submitted true
 ```
 
 The `--outdir` is auto-generated from params: `{study_names}_author_{author_submitted}_process_samples_{process_samples}`.

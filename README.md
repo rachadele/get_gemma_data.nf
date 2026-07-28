@@ -46,8 +46,8 @@ Velmeshev-2019.1
 ```
 
 Example files are provided:
-- `study_names_human.txt` - Human studies
-- `study_names_mouse.txt` - Mouse studies
+- `study_lists/study_names_human.txt` - Human studies
+- `study_lists/study_names_mouse.txt` - Mouse studies
 
 ### Gene Mapping File
 Located at `meta/gemma_genes.tsv`, containing ENSEMBL_ID to OFFICIAL_SYMBOL mappings.
@@ -59,7 +59,7 @@ Located at `meta/gemma_genes.tsv`, containing ENSEMBL_ID to OFFICIAL_SYMBOL mapp
 ```bash
 # Using a study names file
 nextflow run main.nf -profile conda \
-  --study_names study_names_human.txt
+  --study_names study_lists/study_names_human.txt
 
 # Using a direct study ID
 nextflow run main.nf -profile conda \
@@ -75,12 +75,12 @@ nextflow run main.nf -profile conda \
 ```bash
 # Combined mode (default) - one H5AD per study
 nextflow run main.nf -profile conda \
-  --study_names study_names_human.txt \
+  --study_names study_lists/study_names_human.txt \
   --process_samples false
 
 # Sample mode - one H5AD per sample
 nextflow run main.nf -profile conda \
-  --study_names study_names_human.txt \
+  --study_names study_lists/study_names_human.txt \
   --process_samples true
 ```
 
@@ -88,7 +88,7 @@ nextflow run main.nf -profile conda \
 
 ```bash
 nextflow run main.nf -profile conda \
-  --study_names study_names_human.txt \
+  --study_names study_lists/study_names_human.txt \
   --author_submitted true \
   -resume
 ```
