@@ -1,0 +1,25 @@
+Dataset	Organism	Disease / Condition	Brain Region	N Samples
+CMC	Human	Schizophrenia, control	Prefrontal cortex	100
+DevBrain	Human	ASD, control, Williams Syndrome	Prefrontal cortex	16
+MultiomeBrain	Human	Schizophrenia, Bipolar Disorder, control	Prefrontal cortex	21
+PTSDBrainomics	Human	PTSD, MDD, control	Prefrontal cortex	19
+SZBDMulti-Seq	Human	Schizophrenia, Bipolar Disorder, control	Prefrontal cortex	72
+UCLA-ASD	Human	ASD, control	Prefrontal cortex	51
+Velmeshev-2019.1	Human	ASD, control	Prefrontal cortex	10
+Velmeshev-2019.2	Human	ASD, control	Prefrontal cortex	17
+Ling-2024	Human	Schizophrenia, control	Dorsolateral prefrontal cortex	191
+GSE157827	Human	Alzheimer's disease, control	Prefrontal cortex	21
+GSE180928.1	Human	Huntington's disease, control	Cingulate cortex	12
+Mathys-2023	Human	Alzheimer's disease, control	Prefrontal cortex	427
+GSE144136	Human	Control	Dorsolateral prefrontal cortex	34
+GSE174332	Human	ALS, FTLD, control	Primary motor cortex	66
+GSE211870	Human	Control	Prefrontal cortex	4
+GSE237718	Human	Control	Temporal cortex	56
+GSE180670	Human	Control	Oligodendrocytes in primary culture	4
+GSE124952	Mouse	Cocaine treatment	Nucleus accumbens (core)	15
+GSE181021.2	Mouse	Setd1a CRISPR-Cas9	Prefrontal cortex	4
+GSE185454	Mouse	HDAC inhibitor (fear conditioning)	Hippocampus (DG)	4
+GSE199460.2	Mouse	None	Brain	2
+GSE214244.1	Mouse	Alzheimer's disease model (AppNL-G-F)	Entorhinal cortex	3
+GSE247339.1	Mouse	Traumatic brain injury	Ammon's horn	21
+GSE247339.2	Mouse	Traumatic brain injury	Cerebral cortex	20
