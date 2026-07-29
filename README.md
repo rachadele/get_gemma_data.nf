@@ -91,6 +91,14 @@ nextflow run main.nf -profile conda \
   --study_names study_lists/study_names_human.txt \
   --author_submitted true \
   -resume
+
+# Instead of guessing a CTA protocol via curl, fetch all available
+# quantitation types/CTAs for the dataset and pick one automatically
+# (see bin/select_cta_column.py for the selection logic)
+nextflow run main.nf -profile conda \
+  --study_names study_lists/study_names_human.txt \
+  --use_all_qts true \
+  -resume
 ```
 
 ### Test Profile
@@ -117,6 +125,7 @@ nextflow run main.nf -profile conda,test --process_samples true
 | `--study_paths` | Path to pre-downloaded studies directory | `null` |
 | `--process_samples` | Process each sample separately (`true`) or combined (`false`) | `false` |
 | `--author_submitted` | Use author-submitted cell types | `false` |
+| `--use_all_qts` | Fetch cell types via `gemma-cli-staging getSingleCellMetadata -allQts` (picks a CTA protocol column automatically) instead of guessing a protocol via the curl/REST call | `false` |
 | `--gene_mapping` | Path to gene mapping TSV | `meta/gemma_genes.tsv` |
 | `--outdir` | Output directory | Auto-generated: `{study_names}_author_{author_submitted}_process_samples_{process_samples}` |
 

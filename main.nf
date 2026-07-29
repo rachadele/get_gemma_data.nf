@@ -3,6 +3,10 @@
 process downloadCelltypes {
     publishDir "${params.outdir}/cell_type_assignments", mode: 'copy'
 
+    // Only needed for the use_all_qts branch (python transform step); the
+    // curl branch doesn't depend on this environment.
+    conda "/home/rschwartz/anaconda3/envs/scanpyenv"
+
     input:
        tuple val(study_name), path(study_dir)
 
@@ -10,9 +14,21 @@ process downloadCelltypes {
         tuple val(study_name), path("${study_name}.celltypes.tsv"), emit: celltypes_meta
 
     script:
-    
+
     def cta_protocol =  "author-submitted"
     //}
+    if (params.use_all_qts) {
+    """
+    gemma-cli-staging getSingleCellMetadata -e ${study_name} -allQts \
+        -useBioAssayIds -useRawColumnNames \
+        -o "${study_name}.allqts.tsv"
+
+    python $projectDir/bin/select_cta_column.py \
+        --input "${study_name}.allqts.tsv" \
+        --output "${study_name}.celltypes.tsv" \
+        --study_name "${study_name}"
+    """
+    } else {
     """
 
    if [ ${params.author_submitted} = true ]; then
@@ -22,7 +38,7 @@ process downloadCelltypes {
         --compressed \
         "https://staging-gemma.msl.ubc.ca/rest/v2/datasets/${study_name}/cellTypeAssignment?useBioAssayId=true&protocol=${cta_protocol}" \
         -o "${study_name}.celltypes.tsv"
-        
+
     else
         curl -u "${params.GEMMA_USERNAME}:${params.GEMMA_PASSWORD}" \
         -H "Accept: text/tab-separated-values" \
@@ -31,6 +47,7 @@ process downloadCelltypes {
         -o "${study_name}.celltypes.tsv"
     fi
     """
+    }
 }
 
 
