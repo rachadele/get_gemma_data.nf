@@ -91,15 +91,9 @@ nextflow run main.nf -profile conda \
   --study_names study_lists/study_names_human.txt \
   --author_submitted true \
   -resume
-
-# Instead of guessing a CTA protocol via curl, fetch all available
-# quantitation types/CTAs for the dataset and pick one automatically
-# (see bin/select_cta_column.py for the selection logic)
-nextflow run main.nf -profile conda \
-  --study_names study_lists/study_names_human.txt \
-  --use_all_qts true \
-  -resume
 ```
+
+With `--author_submitted true`, if a dataset has no `author-submitted` CTA in Gemma, the REST request 404s and `downloadCelltypes` automatically falls back to Gemma's preferred CTA instead (logged to stderr) rather than saving the 404 error body as if it were data.
 
 ### Test Profile
 
@@ -124,8 +118,7 @@ nextflow run main.nf -profile conda,test --process_samples true
 | `--study_file` | Comma- or space-separated study IDs (inline) | `null` |
 | `--study_paths` | Path to pre-downloaded studies directory | `null` |
 | `--process_samples` | Process each sample separately (`true`) or combined (`false`) | `false` |
-| `--author_submitted` | Use author-submitted cell types | `false` |
-| `--use_all_qts` | Fetch cell types via `gemma-cli-staging getSingleCellMetadata -allQts` (picks a CTA protocol column automatically) instead of guessing a protocol via the curl/REST call | `false` |
+| `--author_submitted` | Use author-submitted cell types; falls back to Gemma's preferred CTA if the dataset has none | `false` |
 | `--gene_mapping` | Path to gene mapping TSV | `meta/gemma_genes.tsv` |
 | `--outdir` | Output directory | Auto-generated: `{study_names}_author_{author_submitted}_process_samples_{process_samples}` |
 
@@ -172,7 +165,7 @@ AnnData format containing:
 |--------|-------------|
 | sample_id | Sample identifier |
 | cell_id | Cell barcode |
-| cell_type | Assigned cell type |
+| cell_type | Canonical assigned cell type (ground truth read by downstream pipelines) |
 | cell_type_uri | Ontology URI |
 
 ### Sample Metadata TSV

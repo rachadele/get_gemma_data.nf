@@ -105,7 +105,7 @@ def add_cell_meta(adata, cell_meta_path, sep="\t"):
   meta = meta.set_index("combined_id")
   # Filter `meta` to exclude columns that overlap with `adata.obs`
   meta_cleaned = meta.loc[:, ~meta.columns.isin(adata.obs.columns)]
-  
+
   # Perform the join operation
   # join on "combined_id" which is the index of meta_cleaned and adata.obs index
   adata.obs = adata.obs.join(meta_cleaned, how="left")
