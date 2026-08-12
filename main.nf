@@ -10,8 +10,6 @@ process downloadCelltypes {
         tuple val(study_name), path("${study_name}.celltypes.tsv"), emit: celltypes_meta
 
     script:
-
-    def cta_protocol =  "author-submitted"
     """
    if [ ${params.author_submitted} = true ]; then
 
@@ -19,17 +17,27 @@ process downloadCelltypes {
         -H "Accept: text/tab-separated-values" \
         --compressed \
         -w "%{http_code}" \
-        "https://staging-gemma.msl.ubc.ca/rest/v2/datasets/${study_name}/cellTypeAssignment?useBioAssayId=true&protocol=${cta_protocol}" \
+        "https://staging-gemma.msl.ubc.ca/rest/v2/datasets/${study_name}/cellTypeAssignment?useBioAssayId=true&protocol=${params.cta_protocol}" \
         -o "${study_name}.celltypes.tsv")
 
         if [ "\$http_code" != "200" ]; then
-            # Not every dataset has an "author-submitted" CTA in Gemma (e.g. it
-            # may only have a Gemma-computed one under a different protocol
+            # Not every dataset has a CTA with protocol="${params.cta_protocol}" in Gemma
+            # (e.g. it may only have a Gemma-computed one under a different protocol
             # name) -- Gemma returns 404 rather than the requested data in
-            # that case. Fall back to the preferred CTA (no protocol
-            # specified) instead of silently keeping the 404 error body,
-            # which curl writes to -o regardless of status.
-            echo "No '${cta_protocol}' CTA for ${study_name} (HTTP \$http_code); falling back to Gemma's preferred CTA." >&2
+            # that case. Some datasets (e.g. Batiuk-2022) instead have *several*
+            # CTAs sharing this protocol at different granularities, in which case
+            # Gemma returns HTTP 500 (there IS a matching CTA, it's just ambiguous
+            # which one) -- distinguish the two so the log message doesn't claim no
+            # such CTA exists when it does. Either way, fall back to the preferred
+            # CTA (no protocol specified) instead of silently keeping the error
+            # body, which curl writes to -o regardless of status. We query by
+            # protocol rather than by CTA name because CTA names are unreliable and
+            # non-standardized across studies.
+            if grep -q "more than one cell type assignment" "${study_name}.celltypes.tsv" 2>/dev/null; then
+                echo "Multiple '${params.cta_protocol}' CTAs for ${study_name}; falling back to Gemma's dataset-level preferred CTA (unverified whether it's the '${params.cta_protocol}' one)." >&2
+            else
+                echo "No '${params.cta_protocol}' CTA for ${study_name} (HTTP \$http_code); falling back to Gemma's preferred CTA." >&2
+            fi
             curl -u "${params.GEMMA_USERNAME}:${params.GEMMA_PASSWORD}" \
             -H "Accept: text/tab-separated-values" \
             --compressed \
