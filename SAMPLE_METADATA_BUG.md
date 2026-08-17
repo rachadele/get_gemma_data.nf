@@ -1,5 +1,19 @@
 # Sample metadata ID bug — fixed in `bin/get_gemma_meta.py`, but existing downloads need reprocessing
 
+> **Update:** the first fix (commit `e8af06e`) relied on the bare
+> `client.raw.get_dataset_samples(study_name)` call's undocumented default
+> `use_processed_quantitation_type`, instead of gemmapy's actual processed
+> samples call (`client.get_dataset_samples(..., use_processed_quantitation_type=False)`).
+> Diffed against 6 studies (CMC, HBCC_Cohort, Ling-2024, SZBDMulti-Seq,
+> Batiuk-2022, GSE124952) and output was identical either way — so the first
+> fix wasn't producing wrong data, just leaning on an unpinned default. The
+> current version explicitly uses `samples` (the wrapped, `False` call) as
+> the metadata source, plus a second `samples_raw` call (same explicit
+> `False`) purely to recover the real BioAssay id, joined back **by sample
+> name** rather than list position. Output now has an explicit
+> `biomaterial_id` column alongside `sample_id` (BioAssay id) so the two ID
+> spaces can't be confused again.
+
 ## The bug
 
 `bin/get_gemma_meta.py` used to build each study's sample metadata table from

@@ -18,28 +18,40 @@ def main():
     client = gemmapy.GemmaPy(auth=[args.gemma_username, args.gemma_password], path='staging')
     study_name = args.study_name
 
-    # Each BioAssay object from this one call already carries its own
-    # BioMaterial (`.sample`) and that BioMaterial's characteristics nested
-    # inside it -- so sample_id/name/characteristics all come from the same
-    # object, with no risk of misalignment. A previous version of this
-    # script instead fetched names/characteristics from a *second*,
-    # separately-ordered API call (client.get_dataset_samples(...)) and
-    # zipped the two together by list position; that second call's
-    # "sample_ID" turned out to be a BioMaterial ID (a different ID space
-    # than BioAssay, zero overlap), so the positional zip silently attached
-    # the wrong sample's name/characteristics to a given BioAssay id in
-    # several studies (confirmed on CMC: 100/100 samples affected).
-    samples_raw = client.raw.get_dataset_samples(study_name)
+    # Need both calls: `samples` has the characteristics/metadata we want, but
+    # its "sample_ID" column is a BioMaterial ID -- a different Gemma
+    # table/ID-space than the BioAssay ID this pipeline joins on elsewhere
+    # (MEX/h5ad filenames, CTA files); the two ID spaces have zero overlap.
+    # `samples_raw` is only used to get that real BioAssay id, matched back
+    # onto `samples` by sample name (BioAssay.name == its nested
+    # BioMaterial.name) rather than list position, since the two calls sort
+    # samples differently.
+    samples = client.get_dataset_samples(study_name, use_processed_quantitation_type=False)
+    samples_raw = client.raw.get_dataset_samples(study_name, use_processed_quantitation_type=False)
 
-    rows = []
-    for s in samples_raw.data:
-        row = {
-            "sample_id": s.id,
-            "sample_name": s.name,
+    bioassay_by_name = {
+        s.name: {
+            "bioassay_id": s.id,
             "organism": s.array_design.taxon.scientific_name.lower().replace(" ", "_"),
         }
-        for c in s.sample.characteristics:
-            row[c.category] = c.value
+        for s in samples_raw.data
+    }
+
+    rows = []
+    for name, biomaterial_id, characteristics in zip(
+        samples["sample_name"],
+        samples["sample_ID"],
+        samples["sample_characteristics"],
+    ):
+        row = {
+            "sample_id": bioassay_by_name[name]["bioassay_id"],  # BioAssay ID (join key)
+            "biomaterial_id": biomaterial_id,                    # BioMaterial ID (reference only)
+            "sample_name": name,
+            "organism": bioassay_by_name[name]["organism"],
+        }
+        for _, c in characteristics.iterrows():
+            if pd.notna(c["category"]):
+                row[c["category"]] = c["value"]
         rows.append(row)
 
     sample_meta_df = pd.DataFrame(rows)
