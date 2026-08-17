@@ -2,14 +2,7 @@
 import warnings
 warnings.filterwarnings("ignore")
 import pandas as pd
-import anndata as ad
-from scipy.sparse import csr_matrix
-from pathlib import Path
 import argparse
-import os
-import json
-import sys
-import numpy as np
 import gemmapy
 
 def argument_parser():
@@ -22,31 +15,36 @@ def argument_parser():
 def main():
     args = argument_parser()
 
-    gemma_username = args.gemma_username
-    gemma_password = args.gemma_password
-    client = gemmapy.GemmaPy(auth=[gemma_username,gemma_password], path='staging')
+    client = gemmapy.GemmaPy(auth=[args.gemma_username, args.gemma_password], path='staging')
     study_name = args.study_name
-    samples_raw = client.raw.get_dataset_samples(study_name)
-  
-    samples = client.get_dataset_samples(study_name, use_processed_quantitation_type=False)
-    sample_names = [x for x in samples["sample_name"]]
-    sample_ids = [x.id for x in samples_raw.data]
-    organisms = [x.array_design.taxon.scientific_name.lower().replace(" ", "_") for x in samples_raw.data]
-    sample_meta = [df for df in samples["sample_characteristics"]]
-    # add sample id to each df in sample meta
-    sample_meta_updated1 = [df.assign(sample_id=sample_ids[i]) for i, df in enumerate(sample_meta)]
-    # add organism to each df in sample meta
-    sample_meta_updated2 = [df.assign(organism=organisms[i]) for i, df in enumerate(sample_meta_updated1)]
-    # add names back
-    sample_meta_updated2 = [df.assign(sample_name=sample_names[i]) for i, df in enumerate(sample_meta_updated2)]
-    
-    # combine all dfs
-    sample_meta_combined = pd.concat(sample_meta_updated2)
-    sample_meta_combined.drop_duplicates(subset=["sample_id", "category"], inplace=True)
-    sample_meta_df = sample_meta_combined.pivot(index=["sample_id","sample_name","organism"], columns="category",values="value").reset_index()
-    sample_meta_df.to_csv(f"{study_name}_sample_meta.tsv", index=False, sep='\t')
-    
 
-    
+    # Each BioAssay object from this one call already carries its own
+    # BioMaterial (`.sample`) and that BioMaterial's characteristics nested
+    # inside it -- so sample_id/name/characteristics all come from the same
+    # object, with no risk of misalignment. A previous version of this
+    # script instead fetched names/characteristics from a *second*,
+    # separately-ordered API call (client.get_dataset_samples(...)) and
+    # zipped the two together by list position; that second call's
+    # "sample_ID" turned out to be a BioMaterial ID (a different ID space
+    # than BioAssay, zero overlap), so the positional zip silently attached
+    # the wrong sample's name/characteristics to a given BioAssay id in
+    # several studies (confirmed on CMC: 100/100 samples affected).
+    samples_raw = client.raw.get_dataset_samples(study_name)
+
+    rows = []
+    for s in samples_raw.data:
+        row = {
+            "sample_id": s.id,
+            "sample_name": s.name,
+            "organism": s.array_design.taxon.scientific_name.lower().replace(" ", "_"),
+        }
+        for c in s.sample.characteristics:
+            row[c.category] = c.value
+        rows.append(row)
+
+    sample_meta_df = pd.DataFrame(rows)
+    sample_meta_df.to_csv(f"{study_name}_sample_meta.tsv", index=False, sep='\t')
+
+
 if __name__ == "__main__":
     main()
