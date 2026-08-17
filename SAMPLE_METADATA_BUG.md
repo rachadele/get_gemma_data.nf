@@ -2,17 +2,14 @@
 
 > **Update:** the first fix (commit `e8af06e`) relied on the bare
 > `client.raw.get_dataset_samples(study_name)` call's undocumented default
-> `use_processed_quantitation_type`, instead of gemmapy's actual processed
-> samples call (`client.get_dataset_samples(..., use_processed_quantitation_type=False)`).
-> Diffed against 6 studies (CMC, HBCC_Cohort, Ling-2024, SZBDMulti-Seq,
-> Batiuk-2022, GSE124952) and output was identical either way — so the first
-> fix wasn't producing wrong data, just leaning on an unpinned default. The
-> current version explicitly uses `samples` (the wrapped, `False` call) as
-> the metadata source, plus a second `samples_raw` call (same explicit
-> `False`) purely to recover the real BioAssay id, joined back **by sample
-> name** rather than list position. Output now has an explicit
-> `biomaterial_id` column alongside `sample_id` (BioAssay id) so the two ID
-> spaces can't be confused again.
+> `use_processed_quantitation_type` instead of pinning it explicitly.
+> Diffed against 13 studies and output was identical either way (the
+> backend default already is `False`) — so the first fix wasn't producing
+> wrong data, just leaning on an unpinned default. Current version pins
+> `use_processed_quantitation_type=False` explicitly on that same single
+> call and adds an explicit `biomaterial_id` column (`s.sample.id`) next to
+> `sample_id` (`s.id`, the BioAssay ID / join key) so the two ID spaces
+> can't be confused again.
 
 ## The bug
 

@@ -18,40 +18,25 @@ def main():
     client = gemmapy.GemmaPy(auth=[args.gemma_username, args.gemma_password], path='staging')
     study_name = args.study_name
 
-    # Need both calls: `samples` has the characteristics/metadata we want, but
-    # its "sample_ID" column is a BioMaterial ID -- a different Gemma
-    # table/ID-space than the BioAssay ID this pipeline joins on elsewhere
-    # (MEX/h5ad filenames, CTA files); the two ID spaces have zero overlap.
-    # `samples_raw` is only used to get that real BioAssay id, matched back
-    # onto `samples` by sample name (BioAssay.name == its nested
-    # BioMaterial.name) rather than list position, since the two calls sort
-    # samples differently.
-    samples = client.get_dataset_samples(study_name, use_processed_quantitation_type=False)
+    # use_processed_quantitation_type=False is the raw per-BioAssay set this
+    # pipeline needs (matches MEX/h5ad filenames, CTA files); each object
+    # already carries its own BioMaterial (`.sample`) with characteristics
+    # nested inside, so id/name/characteristics all come from one place with
+    # no risk of misalignment. (=True instead explodes each sample into one
+    # BioAssay per cell type, unrelated to what's needed here.)
     samples_raw = client.raw.get_dataset_samples(study_name, use_processed_quantitation_type=False)
 
-    bioassay_by_name = {
-        s.name: {
-            "bioassay_id": s.id,
+    rows = []
+    for s in samples_raw.data:
+        row = {
+            "sample_id": s.id,             # BioAssay ID (join key)
+            "biomaterial_id": s.sample.id,  # BioMaterial ID (reference only)
+            "sample_name": s.name,
             "organism": s.array_design.taxon.scientific_name.lower().replace(" ", "_"),
         }
-        for s in samples_raw.data
-    }
-
-    rows = []
-    for name, biomaterial_id, characteristics in zip(
-        samples["sample_name"],
-        samples["sample_ID"],
-        samples["sample_characteristics"],
-    ):
-        row = {
-            "sample_id": bioassay_by_name[name]["bioassay_id"],  # BioAssay ID (join key)
-            "biomaterial_id": biomaterial_id,                    # BioMaterial ID (reference only)
-            "sample_name": name,
-            "organism": bioassay_by_name[name]["organism"],
-        }
-        for _, c in characteristics.iterrows():
-            if pd.notna(c["category"]):
-                row[c["category"]] = c["value"]
+        for c in s.sample.characteristics:
+            if c.category is not None:
+                row[c.category] = c.value
         rows.append(row)
 
     sample_meta_df = pd.DataFrame(rows)
