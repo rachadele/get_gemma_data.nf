@@ -27,7 +27,7 @@ def parse_arguments():
   parser.add_argument("--query_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/study_names_mouse.txt_author_true_process_samples_true/mex/GSE247339.2/1051970_GSM7887408")
   parser.add_argument("--cell_meta_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/study_names_mouse.txt_author_true_process_samples_true/cell_type_assignments/GSE247339.2.celltypes.tsv")
   parser.add_argument("--sample_meta_path", type=str, default="/space/grp/rschwartz/rschwartz/get_gemma_data.nf/study_names_mouse.txt_author_true_process_samples_true/metadata/GSE247339.2/mus_musculus/GSE247339.2_sample_meta.tsv")
-  parser.add_argument('--gene_mapping', type=str, default="/space/grp/rschwartz/rschwartz/cell_annotation_cortex.nf/meta/gemma_genes.tsv", help='Path to the gene mapping file')  
+  parser.add_argument('--gene_mapping', type=str, default="/space/grp/rschwartz/rschwartz/annotation-benchmark/assets/gemma_genes.tsv", help='Path to the gene mapping file')  
   parser.add_argument("--query_name", type=str, default="1051970_GSM7887408", help="Name of the study for output files")
   parser.add_argument("--study_name", type=str, default="GSE247339.2", help="Name of the study for output files")
   if __name__ == "__main__":
