@@ -119,8 +119,11 @@ nextflow run main.nf -profile conda,test --process_samples true
 | `--study_paths` | Path to pre-downloaded studies directory | `null` |
 | `--process_samples` | Process each sample separately (`true`) or combined (`false`) | `false` |
 | `--author_submitted` | Use author-submitted cell types; falls back to Gemma's preferred CTA if the dataset has none | `false` |
+| `--samples` | With `--process_samples true`: only process these sample dirs (comma-separated, e.g. `1203355_BD4,1203370_CON13`); use with `-resume` to regenerate specific samples | `null` |
 | `--gene_mapping` | Path to gene mapping TSV | `meta/gemma_genes.tsv` |
 | `--outdir` | Output directory | Auto-generated: `{study_names}_author_{author_submitted}_process_samples_{process_samples}` |
+
+`get_gemma_meta.py` takes each BioAssay's organism from `array_design.taxon`. Some datasets (e.g. SZBDMulti-Seq, GSE254569) return it as null; it then falls back to the dataset-level taxon and fails with a clear error if that is missing too.
 
 **Note:** You must provide exactly one of `--study_names`, `--study_file`, or `--study_paths`.
 
