@@ -26,13 +26,29 @@ def main():
     # BioAssay per cell type, unrelated to what's needed here.)
     samples_raw = client.raw.get_dataset_samples(study_name, use_processed_quantitation_type=False)
 
+    # Some datasets (e.g. SZBDMulti-Seq, GSE254569) come back with a null
+    # array_design.taxon on every BioAssay; fall back to the dataset's own taxon
+    # (looked up lazily, only if needed) and fail loudly if that is missing too.
+    dataset_taxon = None
+
+    def organism_of(s):
+        nonlocal dataset_taxon
+        if s.array_design is not None and s.array_design.taxon is not None:
+            return s.array_design.taxon.scientific_name.lower().replace(" ", "_")
+        if dataset_taxon is None:
+            found = client.raw.get_datasets(filter=f"shortName = {study_name}").data
+            if len(found) != 1 or found[0].taxon is None:
+                raise ValueError(f"{study_name}: BioAssay taxon is null and no dataset-level taxon found")
+            dataset_taxon = found[0].taxon.scientific_name.lower().replace(" ", "_")
+        return dataset_taxon
+
     rows = []
     for s in samples_raw.data:
         row = {
             "sample_id": s.id,             # BioAssay ID (join key)
             "biomaterial_id": s.sample.id,  # BioMaterial ID (reference only)
             "sample_name": s.name,
-            "organism": s.array_design.taxon.scientific_name.lower().replace(" ", "_"),
+            "organism": organism_of(s),
         }
         for c in s.sample.characteristics:
             if c.category is not None:

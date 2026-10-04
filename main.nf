@@ -157,7 +157,12 @@ workflow {
 
         expanded_channel = study_channel.flatMap { study_name, study_dir ->
                 def results = []
-                study_dir.eachDir { dir -> results << [study_name, dir.name, dir.toString()] }
+                study_dir.eachDir { dir ->
+                    // --samples restricts to specific sample dirs (e.g. 1203355_BD4,1203370_CON13)
+                    if (!params.samples || (params.samples.toString().tokenize(',') as Set).contains(dir.name)) {
+                        results << [study_name, dir.name, dir.toString()]
+                    }
+                }
                 return results
                 
             }
