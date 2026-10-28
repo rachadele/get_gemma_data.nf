@@ -58,7 +58,7 @@ Insert a new process after the per-study h5ad is built. Both `process_samples=tr
 
 ## Eval pipeline changes (separate PR, after `get_gemma_data.nf` lands)
 
-In `nextflow_eval_pipeline`:
+In `annotation-benchmark` (formerly `nextflow_eval_pipeline`, now superseded):
 - Point query inputs at `h5ad_sample_subsampled/{study}/` instead of the existing per-sample h5ads.
 - **Remove per-sample subsampling**, or change its default to `null` so it is off by default. Once the upstream subsampling is the source of truth, leaving the per-sample cap on would double-subsample and bias results.
   - Identify the param (likely something like `params.subsample_query` or similar) and the process that consumes it.
